@@ -46,6 +46,10 @@ message GetOrderTurnoverRequest {
   Granularity granularity = 3;
   // Required: UNSPECIFIED is rejected, use NONE for no grouping.
   Dimension dimension = 4;
+  // IANA time zone name (for example "Europe/Moscow") used to cut day and month
+  // buckets and to label period_start. Empty means UTC. The from/to instants
+  // are absolute and are not affected by it.
+  string time_zone = 9;
   // Empty filter lists mean no filtering; each list holds at most 1000 values.
   // Results are always limited to the organizations the caller is allowed to see.
   repeated string customer_ids = 5;
@@ -64,11 +68,17 @@ message OrderTurnoverRow {
   // different currencies are never added together.
   string currency = 3;
   // Decimal string with exactly two fraction digits and a dot separator, no
-  // exponent (for example "1234.50"): the sum of orders that have an amount.
+  // exponent (for example "1234.50"): the sum of order amounts INCLUDING VAT
+  // over the orders that have an amount. An order whose source says the amount
+  // excludes VAT is raised by its VAT; an unknown basis is treated as including.
   string turnover = 4;
   int64 order_count = 5;
   // Orders in the group whose source did not provide an amount; they add nothing to turnover.
   int64 orders_without_amount = 6;
+  // The same orders' amounts EXCLUDING VAT, same decimal format as turnover.
+  string turnover_excluding_vat = 7;
+  // Total VAT of those orders, same decimal format as turnover.
+  string vat_total = 8;
 }
 
 message GetOrderTurnoverResponse {

@@ -144,6 +144,10 @@ type GetOrderTurnoverRequest struct {
 	Granularity Granularity `protobuf:"varint,3,opt,name=granularity,proto3,enum=analytics.v1.Granularity" json:"granularity,omitempty"`
 	// Required: UNSPECIFIED is rejected, use NONE for no grouping.
 	Dimension Dimension `protobuf:"varint,4,opt,name=dimension,proto3,enum=analytics.v1.Dimension" json:"dimension,omitempty"`
+	// IANA time zone name (for example "Europe/Moscow") used to cut day and month
+	// buckets and to label period_start. Empty means UTC. The from/to instants
+	// are absolute and are not affected by it.
+	TimeZone string `protobuf:"bytes,9,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
 	// Empty filter lists mean no filtering; each list holds at most 1000 values.
 	// Results are always limited to the organizations the caller is allowed to see.
 	CustomerIds     []string `protobuf:"bytes,5,rep,name=customer_ids,json=customerIds,proto3" json:"customer_ids,omitempty"`
@@ -212,6 +216,13 @@ func (x *GetOrderTurnoverRequest) GetDimension() Dimension {
 	return Dimension_DIMENSION_UNSPECIFIED
 }
 
+func (x *GetOrderTurnoverRequest) GetTimeZone() string {
+	if x != nil {
+		return x.TimeZone
+	}
+	return ""
+}
+
 func (x *GetOrderTurnoverRequest) GetCustomerIds() []string {
 	if x != nil {
 		return x.CustomerIds
@@ -251,13 +262,19 @@ type OrderTurnoverRow struct {
 	// different currencies are never added together.
 	Currency string `protobuf:"bytes,3,opt,name=currency,proto3" json:"currency,omitempty"`
 	// Decimal string with exactly two fraction digits and a dot separator, no
-	// exponent (for example "1234.50"): the sum of orders that have an amount.
+	// exponent (for example "1234.50"): the sum of order amounts INCLUDING VAT
+	// over the orders that have an amount. An order whose source says the amount
+	// excludes VAT is raised by its VAT; an unknown basis is treated as including.
 	Turnover   string `protobuf:"bytes,4,opt,name=turnover,proto3" json:"turnover,omitempty"`
 	OrderCount int64  `protobuf:"varint,5,opt,name=order_count,json=orderCount,proto3" json:"order_count,omitempty"`
 	// Orders in the group whose source did not provide an amount; they add nothing to turnover.
 	OrdersWithoutAmount int64 `protobuf:"varint,6,opt,name=orders_without_amount,json=ordersWithoutAmount,proto3" json:"orders_without_amount,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// The same orders' amounts EXCLUDING VAT, same decimal format as turnover.
+	TurnoverExcludingVat string `protobuf:"bytes,7,opt,name=turnover_excluding_vat,json=turnoverExcludingVat,proto3" json:"turnover_excluding_vat,omitempty"`
+	// Total VAT of those orders, same decimal format as turnover.
+	VatTotal      string `protobuf:"bytes,8,opt,name=vat_total,json=vatTotal,proto3" json:"vat_total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *OrderTurnoverRow) Reset() {
@@ -332,6 +349,20 @@ func (x *OrderTurnoverRow) GetOrdersWithoutAmount() int64 {
 	return 0
 }
 
+func (x *OrderTurnoverRow) GetTurnoverExcludingVat() string {
+	if x != nil {
+		return x.TurnoverExcludingVat
+	}
+	return ""
+}
+
+func (x *OrderTurnoverRow) GetVatTotal() string {
+	if x != nil {
+		return x.VatTotal
+	}
+	return ""
+}
+
 type GetOrderTurnoverResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Rows          []*OrderTurnoverRow    `protobuf:"bytes,1,rep,name=rows,proto3" json:"rows,omitempty"`
@@ -380,17 +411,18 @@ var File_analytics_v1_order_metrics_proto protoreflect.FileDescriptor
 
 const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"\n" +
-	" analytics/v1/order_metrics.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x83\x03\n" +
+	" analytics/v1/order_metrics.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa0\x03\n" +
 	"\x17GetOrderTurnoverRequest\x12.\n" +
 	"\x04from\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
 	"\x02to\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12;\n" +
 	"\vgranularity\x18\x03 \x01(\x0e2\x19.analytics.v1.GranularityR\vgranularity\x125\n" +
-	"\tdimension\x18\x04 \x01(\x0e2\x17.analytics.v1.DimensionR\tdimension\x12!\n" +
+	"\tdimension\x18\x04 \x01(\x0e2\x17.analytics.v1.DimensionR\tdimension\x12\x1b\n" +
+	"\ttime_zone\x18\t \x01(\tR\btimeZone\x12!\n" +
 	"\fcustomer_ids\x18\x05 \x03(\tR\vcustomerIds\x12)\n" +
 	"\x10organization_ids\x18\x06 \x03(\tR\x0forganizationIds\x12)\n" +
 	"\x11point_of_sale_ids\x18\a \x03(\tR\x0epointOfSaleIds\x12\x1f\n" +
 	"\vmanager_ids\x18\b \x03(\tR\n" +
-	"managerIds\"\x81\x02\n" +
+	"managerIds\"\xd4\x02\n" +
 	"\x10OrderTurnoverRow\x12=\n" +
 	"\fperiod_start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\vperiodStart\x12!\n" +
 	"\fdimension_id\x18\x02 \x01(\tR\vdimensionId\x12\x1a\n" +
@@ -398,7 +430,9 @@ const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"\bturnover\x18\x04 \x01(\tR\bturnover\x12\x1f\n" +
 	"\vorder_count\x18\x05 \x01(\x03R\n" +
 	"orderCount\x122\n" +
-	"\x15orders_without_amount\x18\x06 \x01(\x03R\x13ordersWithoutAmount\"N\n" +
+	"\x15orders_without_amount\x18\x06 \x01(\x03R\x13ordersWithoutAmount\x124\n" +
+	"\x16turnover_excluding_vat\x18\a \x01(\tR\x14turnoverExcludingVat\x12\x1b\n" +
+	"\tvat_total\x18\b \x01(\tR\bvatTotal\"N\n" +
 	"\x18GetOrderTurnoverResponse\x122\n" +
 	"\x04rows\x18\x01 \x03(\v2\x1e.analytics.v1.OrderTurnoverRowR\x04rows*l\n" +
 	"\vGranularity\x12\x1b\n" +

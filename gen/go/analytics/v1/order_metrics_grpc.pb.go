@@ -27,7 +27,12 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrderMetricsServiceClient interface {
 	// Order turnover: the sum of order amounts as reported by the source system.
-	// It is not sales (realization) turnover.
+	// It is not sales (realization) turnover. Deleted and cancelled orders are
+	// not counted; orders without an order date are not returned.
+	//
+	// Errors: INVALID_ARGUMENT (bad request), PERMISSION_DENIED (an organization
+	// outside the caller's scope), RESOURCE_EXHAUSTED (more than 10000 result
+	// rows: narrow the period or the filters), DEADLINE_EXCEEDED.
 	GetOrderTurnover(ctx context.Context, in *GetOrderTurnoverRequest, opts ...grpc.CallOption) (*GetOrderTurnoverResponse, error)
 }
 
@@ -54,7 +59,12 @@ func (c *orderMetricsServiceClient) GetOrderTurnover(ctx context.Context, in *Ge
 // for forward compatibility.
 type OrderMetricsServiceServer interface {
 	// Order turnover: the sum of order amounts as reported by the source system.
-	// It is not sales (realization) turnover.
+	// It is not sales (realization) turnover. Deleted and cancelled orders are
+	// not counted; orders without an order date are not returned.
+	//
+	// Errors: INVALID_ARGUMENT (bad request), PERMISSION_DENIED (an organization
+	// outside the caller's scope), RESOURCE_EXHAUSTED (more than 10000 result
+	// rows: narrow the period or the filters), DEADLINE_EXCEEDED.
 	GetOrderTurnover(context.Context, *GetOrderTurnoverRequest) (*GetOrderTurnoverResponse, error)
 	mustEmbedUnimplementedOrderMetricsServiceServer()
 }

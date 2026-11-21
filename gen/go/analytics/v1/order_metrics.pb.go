@@ -134,13 +134,18 @@ func (Dimension) EnumDescriptor() ([]byte, []int) {
 
 type GetOrderTurnoverRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Orders are selected by order date: from is inclusive, to is exclusive (UTC).
-	From        *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
-	To          *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
-	Granularity Granularity            `protobuf:"varint,3,opt,name=granularity,proto3,enum=analytics.v1.Granularity" json:"granularity,omitempty"`
-	Dimension   Dimension              `protobuf:"varint,4,opt,name=dimension,proto3,enum=analytics.v1.Dimension" json:"dimension,omitempty"`
-	// Empty filter lists mean no filtering. Results are always limited to the
-	// organizations the caller is allowed to see.
+	// Orders are selected by order date: from is inclusive, to is exclusive.
+	// Both are required, must lie between 2000-01-01 and 2100-01-01, and the
+	// period may not exceed 5 years. Day and month buckets are cut in UTC; a
+	// period that does not align with the buckets returns partial edge buckets.
+	From *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	To   *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
+	// Required: UNSPECIFIED is rejected, use NONE for a single total.
+	Granularity Granularity `protobuf:"varint,3,opt,name=granularity,proto3,enum=analytics.v1.Granularity" json:"granularity,omitempty"`
+	// Required: UNSPECIFIED is rejected, use NONE for no grouping.
+	Dimension Dimension `protobuf:"varint,4,opt,name=dimension,proto3,enum=analytics.v1.Dimension" json:"dimension,omitempty"`
+	// Empty filter lists mean no filtering; each list holds at most 1000 values.
+	// Results are always limited to the organizations the caller is allowed to see.
 	CustomerIds     []string `protobuf:"bytes,5,rep,name=customer_ids,json=customerIds,proto3" json:"customer_ids,omitempty"`
 	OrganizationIds []string `protobuf:"bytes,6,rep,name=organization_ids,json=organizationIds,proto3" json:"organization_ids,omitempty"`
 	PointOfSaleIds  []string `protobuf:"bytes,7,rep,name=point_of_sale_ids,json=pointOfSaleIds,proto3" json:"point_of_sale_ids,omitempty"`
@@ -237,13 +242,16 @@ func (x *GetOrderTurnoverRequest) GetManagerIds() []string {
 
 type OrderTurnoverRow struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// Start of the bucket (UTC); the bucket lasts until the next bucket start.
 	// Unset when the granularity is NONE.
 	PeriodStart *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=period_start,json=periodStart,proto3" json:"period_start,omitempty"`
 	// Empty when the dimension is NONE.
 	DimensionId string `protobuf:"bytes,2,opt,name=dimension_id,json=dimensionId,proto3" json:"dimension_id,omitempty"`
-	// Amounts of different currencies are never added together.
+	// Currency code as provided by the source; empty when unknown. Amounts of
+	// different currencies are never added together.
 	Currency string `protobuf:"bytes,3,opt,name=currency,proto3" json:"currency,omitempty"`
-	// Decimal string, the sum of orders that have an amount.
+	// Decimal string with exactly two fraction digits and a dot separator, no
+	// exponent (for example "1234.50"): the sum of orders that have an amount.
 	Turnover   string `protobuf:"bytes,4,opt,name=turnover,proto3" json:"turnover,omitempty"`
 	OrderCount int64  `protobuf:"varint,5,opt,name=order_count,json=orderCount,proto3" json:"order_count,omitempty"`
 	// Orders in the group whose source did not provide an amount; they add nothing to turnover.

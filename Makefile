@@ -4,13 +4,14 @@ lint:
 	buf lint
 
 breaking:
-	buf breaking --against '.git#branch=main'
+	@tag=$$(git describe --tags --abbrev=0 2>/dev/null); \
+	if [ -n "$$tag" ]; then buf breaking --against ".git#tag=$$tag"; else echo "no release tag yet, nothing to compare against"; fi
 
 gen:
 	buf generate
 
 check: lint breaking gen
-	git diff --exit-code -- gen
+	@test -z "$$(git status --porcelain gen)" || (git status --porcelain gen && echo "gen/ is out of date or untracked" && exit 1)
 
 release: check
 	@test -n "$(VERSION)" || (echo "usage: make release VERSION=vX.Y.Z" && exit 1)

@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package analytics.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/NlightN22/analytics-contracts/gen/go/analytics/v1;analyticsv1";
+
+service OrderMetricsService {
+  // Order turnover: the sum of order amounts as reported by the source system.
+  // It is not sales (realization) turnover.
+  rpc GetOrderTurnover(GetOrderTurnoverRequest) returns (GetOrderTurnoverResponse);
+}
+
+enum Granularity {
+  GRANULARITY_UNSPECIFIED = 0;
+  GRANULARITY_NONE = 1;
+  GRANULARITY_DAY = 2;
+  GRANULARITY_MONTH = 3;
+}
+
+enum Dimension {
+  DIMENSION_UNSPECIFIED = 0;
+  DIMENSION_NONE = 1;
+  DIMENSION_CUSTOMER = 2;
+  DIMENSION_ORGANIZATION = 3;
+  DIMENSION_POINT_OF_SALE = 4;
+  DIMENSION_MANAGER = 5;
+}
+
+message GetOrderTurnoverRequest {
+  // Orders are selected by order date: from is inclusive, to is exclusive (UTC).
+  google.protobuf.Timestamp from = 1;
+  google.protobuf.Timestamp to = 2;
+  Granularity granularity = 3;
+  Dimension dimension = 4;
+  // Empty filter lists mean no filtering. Results are always limited to the
+  // organizations the caller is allowed to see.
+  repeated string customer_ids = 5;
+  repeated string organization_ids = 6;
+  repeated string point_of_sale_ids = 7;
+  repeated string manager_ids = 8;
+}
+
+message OrderTurnoverRow {
+  // Unset when the granularity is NONE.
+  google.protobuf.Timestamp period_start = 1;
+  // Empty when the dimension is NONE.
+  string dimension_id = 2;
+  // Amounts of different currencies are never added together.
+  string currency = 3;
+  // Decimal string, the sum of orders that have an amount.
+  string turnover = 4;
+  int64 order_count = 5;
+  // Orders in the group whose source did not provide an amount; they add nothing to turnover.
+  int64 orders_without_amount = 6;
+}
+
+message GetOrderTurnoverResponse {
+  repeated OrderTurnoverRow rows = 1;
+}

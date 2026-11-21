@@ -32,7 +32,7 @@ type OrderMetricsServiceClient interface {
 	//
 	// Errors: UNAUTHENTICATED (missing or invalid credentials), INVALID_ARGUMENT
 	// (bad request), PERMISSION_DENIED (an organization outside the caller's
-	// scope), RESOURCE_EXHAUSTED (more than 10000 result rows, or a query too
+	// scope), RESOURCE_EXHAUSTED (more than 5000 result rows, or a query too
 	// heavy for the server: narrow the period or the filters), DEADLINE_EXCEEDED,
 	// CANCELLED (the caller gave up), INTERNAL (a server fault, retry later).
 	GetOrderTurnover(ctx context.Context, in *GetOrderTurnoverRequest, opts ...grpc.CallOption) (*GetOrderTurnoverResponse, error)
@@ -66,7 +66,7 @@ type OrderMetricsServiceServer interface {
 	//
 	// Errors: UNAUTHENTICATED (missing or invalid credentials), INVALID_ARGUMENT
 	// (bad request), PERMISSION_DENIED (an organization outside the caller's
-	// scope), RESOURCE_EXHAUSTED (more than 10000 result rows, or a query too
+	// scope), RESOURCE_EXHAUSTED (more than 5000 result rows, or a query too
 	// heavy for the server: narrow the period or the filters), DEADLINE_EXCEEDED,
 	// CANCELLED (the caller gave up), INTERNAL (a server fault, retry later).
 	GetOrderTurnover(context.Context, *GetOrderTurnoverRequest) (*GetOrderTurnoverResponse, error)

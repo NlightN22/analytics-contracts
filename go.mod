@@ -2,6 +2,8 @@ module github.com/NlightN22/analytics-contracts
 
 go 1.26.0
 
+retract v0.1.0 // superseded by v0.1.1, use v0.1.1 or later
+
 require (
 	google.golang.org/grpc v1.85.0
 	google.golang.org/protobuf v1.36.12

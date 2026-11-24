@@ -82,7 +82,15 @@ const (
 	Dimension_DIMENSION_CUSTOMER      Dimension = 2
 	Dimension_DIMENSION_ORGANIZATION  Dimension = 3
 	Dimension_DIMENSION_POINT_OF_SALE Dimension = 4
-	Dimension_DIMENSION_MANAGER       Dimension = 5
+	// The manager responsible for the order itself.
+	Dimension_DIMENSION_MANAGER Dimension = 5
+	// The manager of the order's counterparty (customer), taken from the
+	// counterparty's link to its managers. With main_manager_only the main
+	// manager only; otherwise every manager of the counterparty, so an order is
+	// counted once for EACH of them and rows of different managers must not be
+	// added together. Orders whose counterparty has no known manager fall into
+	// the empty dimension_id.
+	Dimension_DIMENSION_COUNTERPARTY_MANAGER Dimension = 6
 )
 
 // Enum value maps for Dimension.
@@ -94,14 +102,16 @@ var (
 		3: "DIMENSION_ORGANIZATION",
 		4: "DIMENSION_POINT_OF_SALE",
 		5: "DIMENSION_MANAGER",
+		6: "DIMENSION_COUNTERPARTY_MANAGER",
 	}
 	Dimension_value = map[string]int32{
-		"DIMENSION_UNSPECIFIED":   0,
-		"DIMENSION_NONE":          1,
-		"DIMENSION_CUSTOMER":      2,
-		"DIMENSION_ORGANIZATION":  3,
-		"DIMENSION_POINT_OF_SALE": 4,
-		"DIMENSION_MANAGER":       5,
+		"DIMENSION_UNSPECIFIED":          0,
+		"DIMENSION_NONE":                 1,
+		"DIMENSION_CUSTOMER":             2,
+		"DIMENSION_ORGANIZATION":         3,
+		"DIMENSION_POINT_OF_SALE":        4,
+		"DIMENSION_MANAGER":              5,
+		"DIMENSION_COUNTERPARTY_MANAGER": 6,
 	}
 )
 
@@ -154,6 +164,23 @@ type GetOrderTurnoverRequest struct {
 	OrganizationIds []string `protobuf:"bytes,6,rep,name=organization_ids,json=organizationIds,proto3" json:"organization_ids,omitempty"`
 	PointOfSaleIds  []string `protobuf:"bytes,7,rep,name=point_of_sale_ids,json=pointOfSaleIds,proto3" json:"point_of_sale_ids,omitempty"`
 	ManagerIds      []string `protobuf:"bytes,8,rep,name=manager_ids,json=managerIds,proto3" json:"manager_ids,omitempty"`
+	// Managers of the order's counterparty (not the order's own manager_ids).
+	// Selection follows main_manager_only: the main manager only, or any manager
+	// of the counterparty. Empty means no filtering.
+	CounterpartyManagerIds []string `protobuf:"bytes,10,rep,name=counterparty_manager_ids,json=counterpartyManagerIds,proto3" json:"counterparty_manager_ids,omitempty"`
+	// false (default): the counterparty's managers are all of its managers;
+	// true: only its main manager is considered, for the filter and for
+	// DIMENSION_COUNTERPARTY_MANAGER.
+	MainManagerOnly bool `protobuf:"varint,11,opt,name=main_manager_only,json=mainManagerOnly,proto3" json:"main_manager_only,omitempty"`
+	// Product filters (at most 1000 values each, empty means none). When any of
+	// them is set the result is counted over the matching order lines, not over
+	// whole orders: order_count is the number of orders having at least one
+	// matching line, product_quantity and product_amount sum the matching lines,
+	// and turnover, turnover_excluding_vat and vat_total are left empty. Both
+	// filters together select lines that match both.
+	ProductIds []string `protobuf:"bytes,12,rep,name=product_ids,json=productIds,proto3" json:"product_ids,omitempty"`
+	// Manufacturer ids as linked to the products by the source system.
+	ManufacturerIds []string `protobuf:"bytes,13,rep,name=manufacturer_ids,json=manufacturerIds,proto3" json:"manufacturer_ids,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -251,6 +278,34 @@ func (x *GetOrderTurnoverRequest) GetManagerIds() []string {
 	return nil
 }
 
+func (x *GetOrderTurnoverRequest) GetCounterpartyManagerIds() []string {
+	if x != nil {
+		return x.CounterpartyManagerIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetMainManagerOnly() bool {
+	if x != nil {
+		return x.MainManagerOnly
+	}
+	return false
+}
+
+func (x *GetOrderTurnoverRequest) GetProductIds() []string {
+	if x != nil {
+		return x.ProductIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetManufacturerIds() []string {
+	if x != nil {
+		return x.ManufacturerIds
+	}
+	return nil
+}
+
 type OrderTurnoverRow struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Start of the bucket (UTC); the bucket lasts until the next bucket start.
@@ -272,9 +327,18 @@ type OrderTurnoverRow struct {
 	// The same orders' amounts EXCLUDING VAT, same decimal format as turnover.
 	TurnoverExcludingVat string `protobuf:"bytes,7,opt,name=turnover_excluding_vat,json=turnoverExcludingVat,proto3" json:"turnover_excluding_vat,omitempty"`
 	// Total VAT of those orders, same decimal format as turnover.
-	VatTotal      string `protobuf:"bytes,8,opt,name=vat_total,json=vatTotal,proto3" json:"vat_total,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	VatTotal string `protobuf:"bytes,8,opt,name=vat_total,json=vatTotal,proto3" json:"vat_total,omitempty"`
+	// Filled only when product_ids or manufacturer_ids is set, otherwise empty.
+	// Sum of the matching lines' quantities in the lines' own units, a decimal
+	// string with a dot and exactly three fraction digits.
+	ProductQuantity string `protobuf:"bytes,9,opt,name=product_quantity,json=productQuantity,proto3" json:"product_quantity,omitempty"`
+	// Sum of the matching lines' amounts as provided by the source (including VAT
+	// when the order's amount includes VAT), two fraction digits.
+	ProductAmount string `protobuf:"bytes,10,opt,name=product_amount,json=productAmount,proto3" json:"product_amount,omitempty"`
+	// Matching lines that carry no amount; they add nothing to product_amount.
+	ProductLinesWithoutAmount int64 `protobuf:"varint,11,opt,name=product_lines_without_amount,json=productLinesWithoutAmount,proto3" json:"product_lines_without_amount,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *OrderTurnoverRow) Reset() {
@@ -363,6 +427,27 @@ func (x *OrderTurnoverRow) GetVatTotal() string {
 	return ""
 }
 
+func (x *OrderTurnoverRow) GetProductQuantity() string {
+	if x != nil {
+		return x.ProductQuantity
+	}
+	return ""
+}
+
+func (x *OrderTurnoverRow) GetProductAmount() string {
+	if x != nil {
+		return x.ProductAmount
+	}
+	return ""
+}
+
+func (x *OrderTurnoverRow) GetProductLinesWithoutAmount() int64 {
+	if x != nil {
+		return x.ProductLinesWithoutAmount
+	}
+	return 0
+}
+
 type GetOrderTurnoverResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Rows          []*OrderTurnoverRow    `protobuf:"bytes,1,rep,name=rows,proto3" json:"rows,omitempty"`
@@ -411,7 +496,7 @@ var File_analytics_v1_order_metrics_proto protoreflect.FileDescriptor
 
 const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"\n" +
-	" analytics/v1/order_metrics.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa0\x03\n" +
+	" analytics/v1/order_metrics.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd2\x04\n" +
 	"\x17GetOrderTurnoverRequest\x12.\n" +
 	"\x04from\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
 	"\x02to\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12;\n" +
@@ -422,7 +507,13 @@ const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"\x10organization_ids\x18\x06 \x03(\tR\x0forganizationIds\x12)\n" +
 	"\x11point_of_sale_ids\x18\a \x03(\tR\x0epointOfSaleIds\x12\x1f\n" +
 	"\vmanager_ids\x18\b \x03(\tR\n" +
-	"managerIds\"\xd4\x02\n" +
+	"managerIds\x128\n" +
+	"\x18counterparty_manager_ids\x18\n" +
+	" \x03(\tR\x16counterpartyManagerIds\x12*\n" +
+	"\x11main_manager_only\x18\v \x01(\bR\x0fmainManagerOnly\x12\x1f\n" +
+	"\vproduct_ids\x18\f \x03(\tR\n" +
+	"productIds\x12)\n" +
+	"\x10manufacturer_ids\x18\r \x03(\tR\x0fmanufacturerIds\"\xe7\x03\n" +
 	"\x10OrderTurnoverRow\x12=\n" +
 	"\fperiod_start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\vperiodStart\x12!\n" +
 	"\fdimension_id\x18\x02 \x01(\tR\vdimensionId\x12\x1a\n" +
@@ -432,21 +523,26 @@ const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"orderCount\x122\n" +
 	"\x15orders_without_amount\x18\x06 \x01(\x03R\x13ordersWithoutAmount\x124\n" +
 	"\x16turnover_excluding_vat\x18\a \x01(\tR\x14turnoverExcludingVat\x12\x1b\n" +
-	"\tvat_total\x18\b \x01(\tR\bvatTotal\"N\n" +
+	"\tvat_total\x18\b \x01(\tR\bvatTotal\x12)\n" +
+	"\x10product_quantity\x18\t \x01(\tR\x0fproductQuantity\x12%\n" +
+	"\x0eproduct_amount\x18\n" +
+	" \x01(\tR\rproductAmount\x12?\n" +
+	"\x1cproduct_lines_without_amount\x18\v \x01(\x03R\x19productLinesWithoutAmount\"N\n" +
 	"\x18GetOrderTurnoverResponse\x122\n" +
 	"\x04rows\x18\x01 \x03(\v2\x1e.analytics.v1.OrderTurnoverRowR\x04rows*l\n" +
 	"\vGranularity\x12\x1b\n" +
 	"\x17GRANULARITY_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10GRANULARITY_NONE\x10\x01\x12\x13\n" +
 	"\x0fGRANULARITY_DAY\x10\x02\x12\x15\n" +
-	"\x11GRANULARITY_MONTH\x10\x03*\xa2\x01\n" +
+	"\x11GRANULARITY_MONTH\x10\x03*\xc6\x01\n" +
 	"\tDimension\x12\x19\n" +
 	"\x15DIMENSION_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eDIMENSION_NONE\x10\x01\x12\x16\n" +
 	"\x12DIMENSION_CUSTOMER\x10\x02\x12\x1a\n" +
 	"\x16DIMENSION_ORGANIZATION\x10\x03\x12\x1b\n" +
 	"\x17DIMENSION_POINT_OF_SALE\x10\x04\x12\x15\n" +
-	"\x11DIMENSION_MANAGER\x10\x052x\n" +
+	"\x11DIMENSION_MANAGER\x10\x05\x12\"\n" +
+	"\x1eDIMENSION_COUNTERPARTY_MANAGER\x10\x062x\n" +
 	"\x13OrderMetricsService\x12a\n" +
 	"\x10GetOrderTurnover\x12%.analytics.v1.GetOrderTurnoverRequest\x1a&.analytics.v1.GetOrderTurnoverResponseBJZHgithub.com/NlightN22/analytics-contracts/gen/go/analytics/v1;analyticsv1b\x06proto3"
 

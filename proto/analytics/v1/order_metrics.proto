@@ -32,7 +32,15 @@ enum Dimension {
   DIMENSION_CUSTOMER = 2;
   DIMENSION_ORGANIZATION = 3;
   DIMENSION_POINT_OF_SALE = 4;
+  // The manager responsible for the order itself.
   DIMENSION_MANAGER = 5;
+  // The manager of the order's counterparty (customer), taken from the
+  // counterparty's link to its managers. With main_manager_only the main
+  // manager only; otherwise every manager of the counterparty, so an order is
+  // counted once for EACH of them and rows of different managers must not be
+  // added together. Orders whose counterparty has no known manager fall into
+  // the empty dimension_id.
+  DIMENSION_COUNTERPARTY_MANAGER = 6;
 }
 
 message GetOrderTurnoverRequest {
@@ -56,6 +64,23 @@ message GetOrderTurnoverRequest {
   repeated string organization_ids = 6;
   repeated string point_of_sale_ids = 7;
   repeated string manager_ids = 8;
+  // Managers of the order's counterparty (not the order's own manager_ids).
+  // Selection follows main_manager_only: the main manager only, or any manager
+  // of the counterparty. Empty means no filtering.
+  repeated string counterparty_manager_ids = 10;
+  // false (default): the counterparty's managers are all of its managers;
+  // true: only its main manager is considered, for the filter and for
+  // DIMENSION_COUNTERPARTY_MANAGER.
+  bool main_manager_only = 11;
+  // Product filters (at most 1000 values each, empty means none). When any of
+  // them is set the result is counted over the matching order lines, not over
+  // whole orders: order_count is the number of orders having at least one
+  // matching line, product_quantity and product_amount sum the matching lines,
+  // and turnover, turnover_excluding_vat and vat_total are left empty. Both
+  // filters together select lines that match both.
+  repeated string product_ids = 12;
+  // Manufacturer ids as linked to the products by the source system.
+  repeated string manufacturer_ids = 13;
 }
 
 message OrderTurnoverRow {
@@ -79,6 +104,15 @@ message OrderTurnoverRow {
   string turnover_excluding_vat = 7;
   // Total VAT of those orders, same decimal format as turnover.
   string vat_total = 8;
+  // Filled only when product_ids or manufacturer_ids is set, otherwise empty.
+  // Sum of the matching lines' quantities in the lines' own units, a decimal
+  // string with a dot and exactly three fraction digits.
+  string product_quantity = 9;
+  // Sum of the matching lines' amounts as provided by the source (including VAT
+  // when the order's amount includes VAT), two fraction digits.
+  string product_amount = 10;
+  // Matching lines that carry no amount; they add nothing to product_amount.
+  int64 product_lines_without_amount = 11;
 }
 
 message GetOrderTurnoverResponse {

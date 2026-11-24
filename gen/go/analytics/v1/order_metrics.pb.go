@@ -170,7 +170,8 @@ type GetOrderTurnoverRequest struct {
 	CounterpartyManagerIds []string `protobuf:"bytes,10,rep,name=counterparty_manager_ids,json=counterpartyManagerIds,proto3" json:"counterparty_manager_ids,omitempty"`
 	// false (default): the counterparty's managers are all of its managers;
 	// true: only its main manager is considered, for the filter and for
-	// DIMENSION_COUNTERPARTY_MANAGER.
+	// DIMENSION_COUNTERPARTY_MANAGER. It has no effect unless
+	// counterparty_manager_ids or DIMENSION_COUNTERPARTY_MANAGER is used.
 	MainManagerOnly bool `protobuf:"varint,11,opt,name=main_manager_only,json=mainManagerOnly,proto3" json:"main_manager_only,omitempty"`
 	// Product filters (at most 1000 values each, empty means none). When any of
 	// them is set the result is counted over the matching order lines, not over
@@ -179,7 +180,10 @@ type GetOrderTurnoverRequest struct {
 	// and turnover, turnover_excluding_vat and vat_total are left empty. Both
 	// filters together select lines that match both.
 	ProductIds []string `protobuf:"bytes,12,rep,name=product_ids,json=productIds,proto3" json:"product_ids,omitempty"`
-	// Manufacturer ids as linked to the products by the source system.
+	// Manufacturer ids as linked to the products by the source system. Only the
+	// product's direct manufacturer matches: manufacturer groups (parents) are
+	// not expanded, so a group id matches nothing. A product whose link was
+	// deleted at the source is still matched by its last known manufacturer.
 	ManufacturerIds []string `protobuf:"bytes,13,rep,name=manufacturer_ids,json=manufacturerIds,proto3" json:"manufacturer_ids,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -332,8 +336,11 @@ type OrderTurnoverRow struct {
 	// Sum of the matching lines' quantities in the lines' own units, a decimal
 	// string with a dot and exactly three fraction digits.
 	ProductQuantity string `protobuf:"bytes,9,opt,name=product_quantity,json=productQuantity,proto3" json:"product_quantity,omitempty"`
-	// Sum of the matching lines' amounts as provided by the source (including VAT
-	// when the order's amount includes VAT), two fraction digits.
+	// Sum of the matching lines' amounts as provided by the source, two fraction
+	// digits. The basis follows the order: the lines of an order whose amount
+	// includes VAT include VAT, otherwise they do not. It is therefore NOT
+	// comparable with turnover (always including VAT) when the source states
+	// amounts excluding VAT; no VAT split is available per line.
 	ProductAmount string `protobuf:"bytes,10,opt,name=product_amount,json=productAmount,proto3" json:"product_amount,omitempty"`
 	// Matching lines that carry no amount; they add nothing to product_amount.
 	ProductLinesWithoutAmount int64 `protobuf:"varint,11,opt,name=product_lines_without_amount,json=productLinesWithoutAmount,proto3" json:"product_lines_without_amount,omitempty"`

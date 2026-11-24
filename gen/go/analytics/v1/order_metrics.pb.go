@@ -182,8 +182,9 @@ type GetOrderTurnoverRequest struct {
 	ProductIds []string `protobuf:"bytes,12,rep,name=product_ids,json=productIds,proto3" json:"product_ids,omitempty"`
 	// Manufacturer ids as linked to the products by the source system. Only the
 	// product's direct manufacturer matches: manufacturer groups (parents) are
-	// not expanded, so a group id matches nothing. A product whose link was
-	// deleted at the source is still matched by its last known manufacturer.
+	// not expanded, so a group id matches nothing. A product deleted at the source
+	// is not matched by manufacturer (its newest link version carries none), while
+	// product_ids still matches it.
 	ManufacturerIds []string `protobuf:"bytes,13,rep,name=manufacturer_ids,json=manufacturerIds,proto3" json:"manufacturer_ids,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache

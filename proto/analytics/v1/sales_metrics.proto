@@ -57,14 +57,19 @@ message GetSalesTurnoverRequest {
 // One measure of a bucket. Document totals are summed as the source reports
 // them: a document whose total excludes VAT is not converted (the document has
 // no VAT split), so amount mixes both bases and amount_excluding_vat_basis
-// tells how much of it comes from documents whose total excludes VAT.
+// tells how much of it comes from documents whose total excludes VAT. A
+// document that does not state the basis is treated as including VAT.
 message SalesAmount {
   // Decimal string, exactly two fraction digits, dot separator, no exponent.
   string amount = 1;
   // The part of amount that comes from documents whose total excludes VAT,
   // same format. Always "0.00" for corrections (register effect).
   string amount_excluding_vat_basis = 2;
+  // Documents counted in this figure, including those without an amount.
   int64 document_count = 3;
+  // Documents of the figure whose source carries no total; they add nothing to
+  // amount.
+  int64 documents_without_amount = 4;
 }
 
 message SalesTurnoverRow {
@@ -81,17 +86,29 @@ message SalesTurnoverRow {
   SalesAmount returns = 5;
   // Sales corrections as the signed effect on the settlement register: a
   // negative amount reduces sales, a positive one increases it. Taken from the
-  // register entries, in the register's currency, and counted by document date.
+  // register entries of correction documents that are still posted (a
+  // tombstoned or deleted correction is dropped), in the register's currency,
+  // and counted by document date.
   SalesAmount corrections = 6;
   // Net sales: sales - returns + corrections, with returns and corrections
   // applied together.
-  SalesAmount net_sales = 7;
+  SalesAmount net_sales = 8;
+
+  reserved 7;
+  reserved "net_of_returns";
 }
 
 message GetSalesTurnoverResponse {
   repeated SalesTurnoverRow rows = 1;
   // Posted correction documents in the period (counterparty, organization and
-  // contract filters applied) for which the register effect has not arrived
-  // yet, so they are missing from corrections and the net figures.
+  // contract filters applied; the counterparty manager filter and dimension are
+  // NOT applied) for which the register effect has not arrived yet, so they are
+  // missing from corrections and the net figures.
   int64 corrections_without_effect = 2;
+  // Currency values of the rows that could not be turned into a catalog code
+  // (an id the currency catalog does not know). The same currency can then
+  // appear under an id and under a code in separate rows, and net_sales of such
+  // a row mixes only the documents that carry the same value. An empty
+  // currency (the source gave none) is not listed.
+  repeated string unresolved_currencies = 3;
 }

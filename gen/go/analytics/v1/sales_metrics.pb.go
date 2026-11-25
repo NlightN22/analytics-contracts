@@ -211,7 +211,8 @@ func (x *GetSalesTurnoverRequest) GetMainManagerOnly() bool {
 // One measure of a bucket. Document totals are summed as the source reports
 // them: a document whose total excludes VAT is not converted (the document has
 // no VAT split), so amount mixes both bases and amount_excluding_vat_basis
-// tells how much of it comes from documents whose total excludes VAT.
+// tells how much of it comes from documents whose total excludes VAT. A
+// document that does not state the basis is treated as including VAT.
 type SalesAmount struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Decimal string, exactly two fraction digits, dot separator, no exponent.
@@ -219,9 +220,13 @@ type SalesAmount struct {
 	// The part of amount that comes from documents whose total excludes VAT,
 	// same format. Always "0.00" for corrections (register effect).
 	AmountExcludingVatBasis string `protobuf:"bytes,2,opt,name=amount_excluding_vat_basis,json=amountExcludingVatBasis,proto3" json:"amount_excluding_vat_basis,omitempty"`
-	DocumentCount           int64  `protobuf:"varint,3,opt,name=document_count,json=documentCount,proto3" json:"document_count,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// Documents counted in this figure, including those without an amount.
+	DocumentCount int64 `protobuf:"varint,3,opt,name=document_count,json=documentCount,proto3" json:"document_count,omitempty"`
+	// Documents of the figure whose source carries no total; they add nothing to
+	// amount.
+	DocumentsWithoutAmount int64 `protobuf:"varint,4,opt,name=documents_without_amount,json=documentsWithoutAmount,proto3" json:"documents_without_amount,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *SalesAmount) Reset() {
@@ -275,6 +280,13 @@ func (x *SalesAmount) GetDocumentCount() int64 {
 	return 0
 }
 
+func (x *SalesAmount) GetDocumentsWithoutAmount() int64 {
+	if x != nil {
+		return x.DocumentsWithoutAmount
+	}
+	return 0
+}
+
 type SalesTurnoverRow struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Start of the bucket (UTC); unset when the granularity is NONE.
@@ -290,11 +302,13 @@ type SalesTurnoverRow struct {
 	Returns *SalesAmount `protobuf:"bytes,5,opt,name=returns,proto3" json:"returns,omitempty"`
 	// Sales corrections as the signed effect on the settlement register: a
 	// negative amount reduces sales, a positive one increases it. Taken from the
-	// register entries, in the register's currency, and counted by document date.
+	// register entries of correction documents that are still posted (a
+	// tombstoned or deleted correction is dropped), in the register's currency,
+	// and counted by document date.
 	Corrections *SalesAmount `protobuf:"bytes,6,opt,name=corrections,proto3" json:"corrections,omitempty"`
 	// Net sales: sales - returns + corrections, with returns and corrections
 	// applied together.
-	NetSales      *SalesAmount `protobuf:"bytes,7,opt,name=net_sales,json=netSales,proto3" json:"net_sales,omitempty"`
+	NetSales      *SalesAmount `protobuf:"bytes,8,opt,name=net_sales,json=netSales,proto3" json:"net_sales,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -382,11 +396,18 @@ type GetSalesTurnoverResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Rows  []*SalesTurnoverRow    `protobuf:"bytes,1,rep,name=rows,proto3" json:"rows,omitempty"`
 	// Posted correction documents in the period (counterparty, organization and
-	// contract filters applied) for which the register effect has not arrived
-	// yet, so they are missing from corrections and the net figures.
+	// contract filters applied; the counterparty manager filter and dimension are
+	// NOT applied) for which the register effect has not arrived yet, so they are
+	// missing from corrections and the net figures.
 	CorrectionsWithoutEffect int64 `protobuf:"varint,2,opt,name=corrections_without_effect,json=correctionsWithoutEffect,proto3" json:"corrections_without_effect,omitempty"`
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
+	// Currency values of the rows that could not be turned into a catalog code
+	// (an id the currency catalog does not know). The same currency can then
+	// appear under an id and under a code in separate rows, and net_sales of such
+	// a row mixes only the documents that carry the same value. An empty
+	// currency (the source gave none) is not listed.
+	UnresolvedCurrencies []string `protobuf:"bytes,3,rep,name=unresolved_currencies,json=unresolvedCurrencies,proto3" json:"unresolved_currencies,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *GetSalesTurnoverResponse) Reset() {
@@ -433,6 +454,13 @@ func (x *GetSalesTurnoverResponse) GetCorrectionsWithoutEffect() int64 {
 	return 0
 }
 
+func (x *GetSalesTurnoverResponse) GetUnresolvedCurrencies() []string {
+	if x != nil {
+		return x.UnresolvedCurrencies
+	}
+	return nil
+}
+
 var File_analytics_v1_sales_metrics_proto protoreflect.FileDescriptor
 
 const file_analytics_v1_sales_metrics_proto_rawDesc = "" +
@@ -449,11 +477,12 @@ const file_analytics_v1_sales_metrics_proto_rawDesc = "" +
 	"\fcontract_ids\x18\b \x03(\tR\vcontractIds\x128\n" +
 	"\x18counterparty_manager_ids\x18\t \x03(\tR\x16counterpartyManagerIds\x12*\n" +
 	"\x11main_manager_only\x18\n" +
-	" \x01(\bR\x0fmainManagerOnly\"\x89\x01\n" +
+	" \x01(\bR\x0fmainManagerOnly\"\xc3\x01\n" +
 	"\vSalesAmount\x12\x16\n" +
 	"\x06amount\x18\x01 \x01(\tR\x06amount\x12;\n" +
 	"\x1aamount_excluding_vat_basis\x18\x02 \x01(\tR\x17amountExcludingVatBasis\x12%\n" +
-	"\x0edocument_count\x18\x03 \x01(\x03R\rdocumentCount\"\xeb\x02\n" +
+	"\x0edocument_count\x18\x03 \x01(\x03R\rdocumentCount\x128\n" +
+	"\x18documents_without_amount\x18\x04 \x01(\x03R\x16documentsWithoutAmount\"\x81\x03\n" +
 	"\x10SalesTurnoverRow\x12=\n" +
 	"\fperiod_start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\vperiodStart\x12!\n" +
 	"\fdimension_id\x18\x02 \x01(\tR\vdimensionId\x12\x1a\n" +
@@ -461,10 +490,11 @@ const file_analytics_v1_sales_metrics_proto_rawDesc = "" +
 	"\x05sales\x18\x04 \x01(\v2\x19.analytics.v1.SalesAmountR\x05sales\x123\n" +
 	"\areturns\x18\x05 \x01(\v2\x19.analytics.v1.SalesAmountR\areturns\x12;\n" +
 	"\vcorrections\x18\x06 \x01(\v2\x19.analytics.v1.SalesAmountR\vcorrections\x126\n" +
-	"\tnet_sales\x18\a \x01(\v2\x19.analytics.v1.SalesAmountR\bnetSales\"\x8c\x01\n" +
+	"\tnet_sales\x18\b \x01(\v2\x19.analytics.v1.SalesAmountR\bnetSalesJ\x04\b\a\x10\bR\x0enet_of_returns\"\xc1\x01\n" +
 	"\x18GetSalesTurnoverResponse\x122\n" +
 	"\x04rows\x18\x01 \x03(\v2\x1e.analytics.v1.SalesTurnoverRowR\x04rows\x12<\n" +
-	"\x1acorrections_without_effect\x18\x02 \x01(\x03R\x18correctionsWithoutEffect*\xd7\x01\n" +
+	"\x1acorrections_without_effect\x18\x02 \x01(\x03R\x18correctionsWithoutEffect\x123\n" +
+	"\x15unresolved_currencies\x18\x03 \x03(\tR\x14unresolvedCurrencies*\xd7\x01\n" +
 	"\x0eSalesDimension\x12\x1f\n" +
 	"\x1bSALES_DIMENSION_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14SALES_DIMENSION_NONE\x10\x01\x12 \n" +

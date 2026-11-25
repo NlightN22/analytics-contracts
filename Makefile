@@ -3,8 +3,10 @@
 lint:
 	buf lint
 
+RETRACTED := v0.4.0 v0.4.1
+
 breaking:
-	@tag=$$(git describe --tags --abbrev=0 2>/dev/null); \
+	@tag=$$(git describe --tags --abbrev=0 $(foreach t,$(RETRACTED),--exclude $(t)) 2>/dev/null); \
 	if [ -n "$$tag" ]; then buf breaking --against ".git#tag=$$tag"; else echo "no release tag yet, nothing to compare against"; fi
 
 gen:

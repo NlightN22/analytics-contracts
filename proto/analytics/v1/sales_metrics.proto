@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package analytics.v1;
+
+import "analytics/v1/order_metrics.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/NlightN22/analytics-contracts/gen/go/analytics/v1;analyticsv1";
+
+service SalesMetricsService {
+  // Real sales: realization documents (goods and services sales), customer
+  // returns and sales corrections as posted in the accounting system, not order
+  // amounts. Only posted documents that are not marked for deletion and not
+  // deleted are counted; the period is cut by the document date.
+  //
+  // Errors: UNAUTHENTICATED, INVALID_ARGUMENT (bad request), PERMISSION_DENIED
+  // (an organization outside the caller's scope), RESOURCE_EXHAUSTED (more than
+  // 5000 result rows or a query too heavy: narrow the period or the filters),
+  // DEADLINE_EXCEEDED, CANCELLED, INTERNAL.
+  rpc GetSalesTurnover(GetSalesTurnoverRequest) returns (GetSalesTurnoverResponse);
+}
+
+enum SalesDimension {
+  SALES_DIMENSION_UNSPECIFIED = 0;
+  SALES_DIMENSION_NONE = 1;
+  SALES_DIMENSION_COUNTERPARTY = 2;
+  SALES_DIMENSION_ORGANIZATION = 3;
+  SALES_DIMENSION_CONTRACT = 4;
+  // Any manager of the document's counterparty (a counterparty with several
+  // managers is counted under each of them, so rows must not be added across
+  // managers); main_manager_only limits it to the main manager. A counterparty
+  // without a link has an empty dimension_id.
+  SALES_DIMENSION_COUNTERPARTY_MANAGER = 5;
+}
+
+message GetSalesTurnoverRequest {
+  // Documents are selected by document date: from is inclusive, to is exclusive.
+  // Both are required, must lie between 2000-01-01 and 2100-01-01, and the
+  // period may not exceed 5 years.
+  google.protobuf.Timestamp from = 1;
+  google.protobuf.Timestamp to = 2;
+  // Required: UNSPECIFIED is rejected, use NONE for a single total.
+  Granularity granularity = 3;
+  // Required: UNSPECIFIED is rejected, use NONE for no grouping.
+  SalesDimension dimension = 4;
+  // IANA time zone name used to cut day and month buckets. Empty means UTC.
+  string time_zone = 5;
+  // The customer of a sale is the counterparty of the document.
+  repeated string counterparty_ids = 6;
+  repeated string organization_ids = 7;
+  repeated string contract_ids = 8;
+  repeated string counterparty_manager_ids = 9;
+  // Same meaning as in GetOrderTurnoverRequest.
+  bool main_manager_only = 10;
+}
+
+// One measure of a bucket. Document totals are summed as the source reports
+// them: a document whose total excludes VAT is not converted (the document has
+// no VAT split), so amount mixes both bases and amount_excluding_vat_basis
+// tells how much of it comes from documents whose total excludes VAT.
+message SalesAmount {
+  // Decimal string, exactly two fraction digits, dot separator, no exponent.
+  string amount = 1;
+  // The part of amount that comes from documents whose total excludes VAT,
+  // same format. Always "0.00" for corrections (register effect).
+  string amount_excluding_vat_basis = 2;
+  int64 document_count = 3;
+}
+
+message SalesTurnoverRow {
+  // Start of the bucket (UTC); unset when the granularity is NONE.
+  google.protobuf.Timestamp period_start = 1;
+  // Empty when the dimension is NONE or the manager is unknown.
+  string dimension_id = 2;
+  // Currency as provided by the source (an id or a code); amounts of different
+  // currencies are never added together, each currency is its own row.
+  string currency = 3;
+  // Realization documents.
+  SalesAmount sales = 4;
+  // Customer returns, a positive amount that reduces sales.
+  SalesAmount returns = 5;
+  // Sales corrections as the signed effect on the settlement register: a
+  // negative amount reduces sales, a positive one increases it. Taken from the
+  // register entries, in the register's currency, and counted by document date.
+  SalesAmount corrections = 6;
+  // sales - returns.
+  SalesAmount net_of_returns = 7;
+  // sales - returns + corrections.
+  SalesAmount net_of_returns_and_corrections = 8;
+}
+
+message GetSalesTurnoverResponse {
+  repeated SalesTurnoverRow rows = 1;
+  // Posted correction documents in the period (counterparty, organization and
+  // contract filters applied) for which the register effect has not arrived
+  // yet, so they are missing from corrections and the net figures.
+  int64 corrections_without_effect = 2;
+}

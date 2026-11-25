@@ -400,11 +400,12 @@ type GetSalesTurnoverResponse struct {
 	// NOT applied) for which the register effect has not arrived yet, so they are
 	// missing from corrections and the net figures.
 	CorrectionsWithoutEffect int64 `protobuf:"varint,2,opt,name=corrections_without_effect,json=correctionsWithoutEffect,proto3" json:"corrections_without_effect,omitempty"`
-	// Currency values of the rows that could not be turned into a catalog code
-	// (an id the currency catalog does not know). The same currency can then
-	// appear under an id and under a code in separate rows, and net_sales of such
-	// a row mixes only the documents that carry the same value. An empty
-	// currency (the source gave none) is not listed.
+	// Currency values of the rows that the currency catalog cannot confirm: a
+	// value that is neither a catalog currency id (mapped to its code) nor a code
+	// present in the catalog. The same currency can then appear under an id and
+	// under a code in separate rows, and net_sales of such a row mixes only the
+	// documents that carry the same value. An empty currency (the source gave
+	// none) is not listed.
 	UnresolvedCurrencies []string `protobuf:"bytes,3,rep,name=unresolved_currencies,json=unresolvedCurrencies,proto3" json:"unresolved_currencies,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache

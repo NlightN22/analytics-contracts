@@ -105,10 +105,11 @@ message GetSalesTurnoverResponse {
   // NOT applied) for which the register effect has not arrived yet, so they are
   // missing from corrections and the net figures.
   int64 corrections_without_effect = 2;
-  // Currency values of the rows that could not be turned into a catalog code
-  // (an id the currency catalog does not know). The same currency can then
-  // appear under an id and under a code in separate rows, and net_sales of such
-  // a row mixes only the documents that carry the same value. An empty
-  // currency (the source gave none) is not listed.
+  // Currency values of the rows that the currency catalog cannot confirm: a
+  // value that is neither a catalog currency id (mapped to its code) nor a code
+  // present in the catalog. The same currency can then appear under an id and
+  // under a code in separate rows, and net_sales of such a row mixes only the
+  // documents that carry the same value. An empty currency (the source gave
+  // none) is not listed.
   repeated string unresolved_currencies = 3;
 }

@@ -3,7 +3,7 @@
 lint:
 	buf lint
 
-RETRACTED := v0.4.0 v0.4.1
+RETRACTED := $(shell awk '/^retract[ \t]*\(/{b=1;next} b&&/^\)/{b=0} b{print $$1} /^retract[ \t]+v/{print $$2}' go.mod)
 
 breaking:
 	@tag=$$(git describe --tags --abbrev=0 $(foreach t,$(RETRACTED),--exclude $(t)) 2>/dev/null); \

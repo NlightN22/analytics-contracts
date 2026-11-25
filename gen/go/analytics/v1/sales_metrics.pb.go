@@ -292,12 +292,11 @@ type SalesTurnoverRow struct {
 	// negative amount reduces sales, a positive one increases it. Taken from the
 	// register entries, in the register's currency, and counted by document date.
 	Corrections *SalesAmount `protobuf:"bytes,6,opt,name=corrections,proto3" json:"corrections,omitempty"`
-	// sales - returns.
-	NetOfReturns *SalesAmount `protobuf:"bytes,7,opt,name=net_of_returns,json=netOfReturns,proto3" json:"net_of_returns,omitempty"`
-	// sales - returns + corrections.
-	NetOfReturnsAndCorrections *SalesAmount `protobuf:"bytes,8,opt,name=net_of_returns_and_corrections,json=netOfReturnsAndCorrections,proto3" json:"net_of_returns_and_corrections,omitempty"`
-	unknownFields              protoimpl.UnknownFields
-	sizeCache                  protoimpl.SizeCache
+	// Net sales: sales - returns + corrections, with returns and corrections
+	// applied together.
+	NetSales      *SalesAmount `protobuf:"bytes,7,opt,name=net_sales,json=netSales,proto3" json:"net_sales,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SalesTurnoverRow) Reset() {
@@ -372,16 +371,9 @@ func (x *SalesTurnoverRow) GetCorrections() *SalesAmount {
 	return nil
 }
 
-func (x *SalesTurnoverRow) GetNetOfReturns() *SalesAmount {
+func (x *SalesTurnoverRow) GetNetSales() *SalesAmount {
 	if x != nil {
-		return x.NetOfReturns
-	}
-	return nil
-}
-
-func (x *SalesTurnoverRow) GetNetOfReturnsAndCorrections() *SalesAmount {
-	if x != nil {
-		return x.NetOfReturnsAndCorrections
+		return x.NetSales
 	}
 	return nil
 }
@@ -461,16 +453,15 @@ const file_analytics_v1_sales_metrics_proto_rawDesc = "" +
 	"\vSalesAmount\x12\x16\n" +
 	"\x06amount\x18\x01 \x01(\tR\x06amount\x12;\n" +
 	"\x1aamount_excluding_vat_basis\x18\x02 \x01(\tR\x17amountExcludingVatBasis\x12%\n" +
-	"\x0edocument_count\x18\x03 \x01(\x03R\rdocumentCount\"\xd3\x03\n" +
+	"\x0edocument_count\x18\x03 \x01(\x03R\rdocumentCount\"\xeb\x02\n" +
 	"\x10SalesTurnoverRow\x12=\n" +
 	"\fperiod_start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\vperiodStart\x12!\n" +
 	"\fdimension_id\x18\x02 \x01(\tR\vdimensionId\x12\x1a\n" +
 	"\bcurrency\x18\x03 \x01(\tR\bcurrency\x12/\n" +
 	"\x05sales\x18\x04 \x01(\v2\x19.analytics.v1.SalesAmountR\x05sales\x123\n" +
 	"\areturns\x18\x05 \x01(\v2\x19.analytics.v1.SalesAmountR\areturns\x12;\n" +
-	"\vcorrections\x18\x06 \x01(\v2\x19.analytics.v1.SalesAmountR\vcorrections\x12?\n" +
-	"\x0enet_of_returns\x18\a \x01(\v2\x19.analytics.v1.SalesAmountR\fnetOfReturns\x12]\n" +
-	"\x1enet_of_returns_and_corrections\x18\b \x01(\v2\x19.analytics.v1.SalesAmountR\x1anetOfReturnsAndCorrections\"\x8c\x01\n" +
+	"\vcorrections\x18\x06 \x01(\v2\x19.analytics.v1.SalesAmountR\vcorrections\x126\n" +
+	"\tnet_sales\x18\a \x01(\v2\x19.analytics.v1.SalesAmountR\bnetSales\"\x8c\x01\n" +
 	"\x18GetSalesTurnoverResponse\x122\n" +
 	"\x04rows\x18\x01 \x03(\v2\x1e.analytics.v1.SalesTurnoverRowR\x04rows\x12<\n" +
 	"\x1acorrections_without_effect\x18\x02 \x01(\x03R\x18correctionsWithoutEffect*\xd7\x01\n" +
@@ -516,16 +507,15 @@ var file_analytics_v1_sales_metrics_proto_depIdxs = []int32{
 	2,  // 5: analytics.v1.SalesTurnoverRow.sales:type_name -> analytics.v1.SalesAmount
 	2,  // 6: analytics.v1.SalesTurnoverRow.returns:type_name -> analytics.v1.SalesAmount
 	2,  // 7: analytics.v1.SalesTurnoverRow.corrections:type_name -> analytics.v1.SalesAmount
-	2,  // 8: analytics.v1.SalesTurnoverRow.net_of_returns:type_name -> analytics.v1.SalesAmount
-	2,  // 9: analytics.v1.SalesTurnoverRow.net_of_returns_and_corrections:type_name -> analytics.v1.SalesAmount
-	3,  // 10: analytics.v1.GetSalesTurnoverResponse.rows:type_name -> analytics.v1.SalesTurnoverRow
-	1,  // 11: analytics.v1.SalesMetricsService.GetSalesTurnover:input_type -> analytics.v1.GetSalesTurnoverRequest
-	4,  // 12: analytics.v1.SalesMetricsService.GetSalesTurnover:output_type -> analytics.v1.GetSalesTurnoverResponse
-	12, // [12:13] is the sub-list for method output_type
-	11, // [11:12] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	2,  // 8: analytics.v1.SalesTurnoverRow.net_sales:type_name -> analytics.v1.SalesAmount
+	3,  // 9: analytics.v1.GetSalesTurnoverResponse.rows:type_name -> analytics.v1.SalesTurnoverRow
+	1,  // 10: analytics.v1.SalesMetricsService.GetSalesTurnover:input_type -> analytics.v1.GetSalesTurnoverRequest
+	4,  // 11: analytics.v1.SalesMetricsService.GetSalesTurnover:output_type -> analytics.v1.GetSalesTurnoverResponse
+	11, // [11:12] is the sub-list for method output_type
+	10, // [10:11] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_analytics_v1_sales_metrics_proto_init() }

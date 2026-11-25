@@ -83,10 +83,9 @@ message SalesTurnoverRow {
   // negative amount reduces sales, a positive one increases it. Taken from the
   // register entries, in the register's currency, and counted by document date.
   SalesAmount corrections = 6;
-  // sales - returns.
-  SalesAmount net_of_returns = 7;
-  // sales - returns + corrections.
-  SalesAmount net_of_returns_and_corrections = 8;
+  // Net sales: sales - returns + corrections, with returns and corrections
+  // applied together.
+  SalesAmount net_sales = 7;
 }
 
 message GetSalesTurnoverResponse {

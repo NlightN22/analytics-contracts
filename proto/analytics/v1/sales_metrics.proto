@@ -61,11 +61,26 @@ message GetSalesTurnoverRequest {
   // (main_manager_only applies); with it only the listed managers' rows are
   // dropped. Documents of counterparties without a known manager are never
   // dropped. Sales documents have no product lines, so product, manufacturer
-  // and group filters are not offered here.
+  // and product category filters are not offered here.
   repeated string exclude_counterparty_ids = 11;
   repeated string exclude_organization_ids = 12;
   repeated string exclude_contract_ids = 13;
   repeated string exclude_counterparty_manager_ids = 14;
+
+  // Counterparty groups expanded at query time (the group hierarchy of the
+  // source, parent links up to 32 levels, deleted groups are neither members nor
+  // traversed): a group id selects the documents of the counterparties whose
+  // group is that group or any group below it. A counterparty has the group the
+  // source reported with its latest version; one not re-sent since the group link
+  // appeared has no group yet. An unknown or deleted group id matches nothing:
+  // when counterparty_group_ids is set and none of its values is a live group
+  // the result has no rows. Combined with counterparty_ids and the other include
+  // filters by AND; at most 1000 values.
+  repeated string counterparty_group_ids = 15;
+  // Documents of counterparties in these groups are left out. An unknown or
+  // deleted group excludes nothing, and a counterparty without a known group is
+  // never excluded by it. At most 1000 values.
+  repeated string exclude_counterparty_group_ids = 16;
 }
 
 // One measure of a bucket. Document totals are summed as the source reports

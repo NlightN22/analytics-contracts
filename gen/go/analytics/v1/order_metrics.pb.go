@@ -227,8 +227,39 @@ type GetOrderTurnoverRequest struct {
 	// Products of these groups (expanded as in manufacturer_group_ids) are left
 	// out. An unknown or deleted group id excludes nothing. At most 1000 values.
 	ExcludeManufacturerGroupIds []string `protobuf:"bytes,22,rep,name=exclude_manufacturer_group_ids,json=excludeManufacturerGroupIds,proto3" json:"exclude_manufacturer_group_ids,omitempty"`
-	unknownFields               protoimpl.UnknownFields
-	sizeCache                   protoimpl.SizeCache
+	// Product categories expanded at query time exactly like manufacturer groups:
+	// a category id matches the products whose category is that category or any
+	// category below it in the category hierarchy (parent links, up to 32
+	// levels). Deleted categories are neither members nor traversed. An unknown or
+	// deleted category id matches nothing: when product_category_ids is set and
+	// none of its values is a live category the result has no rows, never the
+	// unfiltered answer. Combined with the other include filters by AND; at most
+	// 1000 values; switches the result to line mode like the other product
+	// filters. A product deleted at the source is not matched (its newest link
+	// version carries no category).
+	ProductCategoryIds []string `protobuf:"bytes,23,rep,name=product_category_ids,json=productCategoryIds,proto3" json:"product_category_ids,omitempty"`
+	// Products of these categories (expanded as in product_category_ids) are left
+	// out; line mode. An unknown or deleted category excludes nothing, and a
+	// product without a known category is never excluded by it. At most 1000
+	// values.
+	ExcludeProductCategoryIds []string `protobuf:"bytes,24,rep,name=exclude_product_category_ids,json=excludeProductCategoryIds,proto3" json:"exclude_product_category_ids,omitempty"`
+	// Customer (counterparty) groups expanded at query time: a group id matches
+	// the customers whose group is that group or any group below it in the
+	// counterparty group hierarchy (parent links, up to 32 levels). Deleted groups
+	// are neither members nor traversed. The group of a customer is the one the
+	// source reported with its latest version; a customer the source has not
+	// re-sent since the group link appeared has no group yet. An unknown or deleted
+	// group id matches nothing: when customer_group_ids is set and none of its
+	// values is a live group the result has no rows. Whole orders are selected (not
+	// lines), combined with the other include filters by AND; at most 1000 values.
+	// Orders without a customer belong to no group.
+	CustomerGroupIds []string `protobuf:"bytes,25,rep,name=customer_group_ids,json=customerGroupIds,proto3" json:"customer_group_ids,omitempty"`
+	// Orders of customers in these groups (expanded as above) are left out. An
+	// unknown or deleted group excludes nothing, and a customer without a known
+	// group is never excluded by it. At most 1000 values.
+	ExcludeCustomerGroupIds []string `protobuf:"bytes,26,rep,name=exclude_customer_group_ids,json=excludeCustomerGroupIds,proto3" json:"exclude_customer_group_ids,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *GetOrderTurnoverRequest) Reset() {
@@ -411,6 +442,34 @@ func (x *GetOrderTurnoverRequest) GetManufacturerGroupIds() []string {
 func (x *GetOrderTurnoverRequest) GetExcludeManufacturerGroupIds() []string {
 	if x != nil {
 		return x.ExcludeManufacturerGroupIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetProductCategoryIds() []string {
+	if x != nil {
+		return x.ProductCategoryIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludeProductCategoryIds() []string {
+	if x != nil {
+		return x.ExcludeProductCategoryIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetCustomerGroupIds() []string {
+	if x != nil {
+		return x.CustomerGroupIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludeCustomerGroupIds() []string {
+	if x != nil {
+		return x.ExcludeCustomerGroupIds
 	}
 	return nil
 }
@@ -608,7 +667,8 @@ var File_analytics_v1_order_metrics_proto protoreflect.FileDescriptor
 
 const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"\n" +
-	" analytics/v1/order_metrics.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd6\b\n" +
+	" analytics/v1/order_metrics.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb4\n" +
+	"\n" +
 	"\x17GetOrderTurnoverRequest\x12.\n" +
 	"\x04from\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
 	"\x02to\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12;\n" +
@@ -634,7 +694,11 @@ const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"\x13exclude_product_ids\x18\x13 \x03(\tR\x11excludeProductIds\x128\n" +
 	"\x18exclude_manufacturer_ids\x18\x14 \x03(\tR\x16excludeManufacturerIds\x124\n" +
 	"\x16manufacturer_group_ids\x18\x15 \x03(\tR\x14manufacturerGroupIds\x12C\n" +
-	"\x1eexclude_manufacturer_group_ids\x18\x16 \x03(\tR\x1bexcludeManufacturerGroupIds\"\xe7\x03\n" +
+	"\x1eexclude_manufacturer_group_ids\x18\x16 \x03(\tR\x1bexcludeManufacturerGroupIds\x120\n" +
+	"\x14product_category_ids\x18\x17 \x03(\tR\x12productCategoryIds\x12?\n" +
+	"\x1cexclude_product_category_ids\x18\x18 \x03(\tR\x19excludeProductCategoryIds\x12,\n" +
+	"\x12customer_group_ids\x18\x19 \x03(\tR\x10customerGroupIds\x12;\n" +
+	"\x1aexclude_customer_group_ids\x18\x1a \x03(\tR\x17excludeCustomerGroupIds\"\xe7\x03\n" +
 	"\x10OrderTurnoverRow\x12=\n" +
 	"\fperiod_start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\vperiodStart\x12!\n" +
 	"\fdimension_id\x18\x02 \x01(\tR\vdimensionId\x12\x1a\n" +

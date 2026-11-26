@@ -113,13 +113,27 @@ type GetSalesTurnoverRequest struct {
 	// (main_manager_only applies); with it only the listed managers' rows are
 	// dropped. Documents of counterparties without a known manager are never
 	// dropped. Sales documents have no product lines, so product, manufacturer
-	// and group filters are not offered here.
+	// and product category filters are not offered here.
 	ExcludeCounterpartyIds        []string `protobuf:"bytes,11,rep,name=exclude_counterparty_ids,json=excludeCounterpartyIds,proto3" json:"exclude_counterparty_ids,omitempty"`
 	ExcludeOrganizationIds        []string `protobuf:"bytes,12,rep,name=exclude_organization_ids,json=excludeOrganizationIds,proto3" json:"exclude_organization_ids,omitempty"`
 	ExcludeContractIds            []string `protobuf:"bytes,13,rep,name=exclude_contract_ids,json=excludeContractIds,proto3" json:"exclude_contract_ids,omitempty"`
 	ExcludeCounterpartyManagerIds []string `protobuf:"bytes,14,rep,name=exclude_counterparty_manager_ids,json=excludeCounterpartyManagerIds,proto3" json:"exclude_counterparty_manager_ids,omitempty"`
-	unknownFields                 protoimpl.UnknownFields
-	sizeCache                     protoimpl.SizeCache
+	// Counterparty groups expanded at query time (the group hierarchy of the
+	// source, parent links up to 32 levels, deleted groups are neither members nor
+	// traversed): a group id selects the documents of the counterparties whose
+	// group is that group or any group below it. A counterparty has the group the
+	// source reported with its latest version; one not re-sent since the group link
+	// appeared has no group yet. An unknown or deleted group id matches nothing:
+	// when counterparty_group_ids is set and none of its values is a live group
+	// the result has no rows. Combined with counterparty_ids and the other include
+	// filters by AND; at most 1000 values.
+	CounterpartyGroupIds []string `protobuf:"bytes,15,rep,name=counterparty_group_ids,json=counterpartyGroupIds,proto3" json:"counterparty_group_ids,omitempty"`
+	// Documents of counterparties in these groups are left out. An unknown or
+	// deleted group excludes nothing, and a counterparty without a known group is
+	// never excluded by it. At most 1000 values.
+	ExcludeCounterpartyGroupIds []string `protobuf:"bytes,16,rep,name=exclude_counterparty_group_ids,json=excludeCounterpartyGroupIds,proto3" json:"exclude_counterparty_group_ids,omitempty"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
 }
 
 func (x *GetSalesTurnoverRequest) Reset() {
@@ -246,6 +260,20 @@ func (x *GetSalesTurnoverRequest) GetExcludeContractIds() []string {
 func (x *GetSalesTurnoverRequest) GetExcludeCounterpartyManagerIds() []string {
 	if x != nil {
 		return x.ExcludeCounterpartyManagerIds
+	}
+	return nil
+}
+
+func (x *GetSalesTurnoverRequest) GetCounterpartyGroupIds() []string {
+	if x != nil {
+		return x.CounterpartyGroupIds
+	}
+	return nil
+}
+
+func (x *GetSalesTurnoverRequest) GetExcludeCounterpartyGroupIds() []string {
+	if x != nil {
+		return x.ExcludeCounterpartyGroupIds
 	}
 	return nil
 }
@@ -508,7 +536,7 @@ var File_analytics_v1_sales_metrics_proto protoreflect.FileDescriptor
 
 const file_analytics_v1_sales_metrics_proto_rawDesc = "" +
 	"\n" +
-	" analytics/v1/sales_metrics.proto\x12\fanalytics.v1\x1a analytics/v1/order_metrics.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd9\x05\n" +
+	" analytics/v1/sales_metrics.proto\x12\fanalytics.v1\x1a analytics/v1/order_metrics.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd4\x06\n" +
 	"\x17GetSalesTurnoverRequest\x12.\n" +
 	"\x04from\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
 	"\x02to\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12;\n" +
@@ -524,7 +552,9 @@ const file_analytics_v1_sales_metrics_proto_rawDesc = "" +
 	"\x18exclude_counterparty_ids\x18\v \x03(\tR\x16excludeCounterpartyIds\x128\n" +
 	"\x18exclude_organization_ids\x18\f \x03(\tR\x16excludeOrganizationIds\x120\n" +
 	"\x14exclude_contract_ids\x18\r \x03(\tR\x12excludeContractIds\x12G\n" +
-	" exclude_counterparty_manager_ids\x18\x0e \x03(\tR\x1dexcludeCounterpartyManagerIds\"\xc3\x01\n" +
+	" exclude_counterparty_manager_ids\x18\x0e \x03(\tR\x1dexcludeCounterpartyManagerIds\x124\n" +
+	"\x16counterparty_group_ids\x18\x0f \x03(\tR\x14counterpartyGroupIds\x12C\n" +
+	"\x1eexclude_counterparty_group_ids\x18\x10 \x03(\tR\x1bexcludeCounterpartyGroupIds\"\xc3\x01\n" +
 	"\vSalesAmount\x12\x16\n" +
 	"\x06amount\x18\x01 \x01(\tR\x06amount\x12;\n" +
 	"\x1aamount_excluding_vat_basis\x18\x02 \x01(\tR\x17amountExcludingVatBasis\x12%\n" +

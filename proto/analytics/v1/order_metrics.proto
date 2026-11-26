@@ -133,6 +133,39 @@ message GetOrderTurnoverRequest {
   // Products of these groups (expanded as in manufacturer_group_ids) are left
   // out. An unknown or deleted group id excludes nothing. At most 1000 values.
   repeated string exclude_manufacturer_group_ids = 22;
+
+  // Product categories expanded at query time exactly like manufacturer groups:
+  // a category id matches the products whose category is that category or any
+  // category below it in the category hierarchy (parent links, up to 32
+  // levels). Deleted categories are neither members nor traversed. An unknown or
+  // deleted category id matches nothing: when product_category_ids is set and
+  // none of its values is a live category the result has no rows, never the
+  // unfiltered answer. Combined with the other include filters by AND; at most
+  // 1000 values; switches the result to line mode like the other product
+  // filters. A product deleted at the source is not matched (its newest link
+  // version carries no category).
+  repeated string product_category_ids = 23;
+  // Products of these categories (expanded as in product_category_ids) are left
+  // out; line mode. An unknown or deleted category excludes nothing, and a
+  // product without a known category is never excluded by it. At most 1000
+  // values.
+  repeated string exclude_product_category_ids = 24;
+
+  // Customer (counterparty) groups expanded at query time: a group id matches
+  // the customers whose group is that group or any group below it in the
+  // counterparty group hierarchy (parent links, up to 32 levels). Deleted groups
+  // are neither members nor traversed. The group of a customer is the one the
+  // source reported with its latest version; a customer the source has not
+  // re-sent since the group link appeared has no group yet. An unknown or deleted
+  // group id matches nothing: when customer_group_ids is set and none of its
+  // values is a live group the result has no rows. Whole orders are selected (not
+  // lines), combined with the other include filters by AND; at most 1000 values.
+  // Orders without a customer belong to no group.
+  repeated string customer_group_ids = 25;
+  // Orders of customers in these groups (expanded as above) are left out. An
+  // unknown or deleted group excludes nothing, and a customer without a known
+  // group is never excluded by it. At most 1000 values.
+  repeated string exclude_customer_group_ids = 26;
 }
 
 message OrderTurnoverRow {

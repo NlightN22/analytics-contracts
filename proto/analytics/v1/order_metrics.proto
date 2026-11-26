@@ -168,6 +168,23 @@ message GetOrderTurnoverRequest {
   // unknown or deleted group excludes nothing, and a customer without a known
   // group is never excluded by it. At most 1000 values.
   repeated string exclude_customer_group_ids = 26;
+
+  // Shipment scheme and processing status of the order as the source system
+  // states them, matched exactly (case and spelling as sent). The scheme is one
+  // of "Ордерная", "Безордерная", "Накладная"; the status is "НаСогласовании" or
+  // "Согласован". The empty string is a value of its own: it matches orders for
+  // which the source gave no scheme or no status (the status is empty for orders
+  // created before statuses existed). These filters act on whole orders, do not
+  // switch the result to line mode, and are combined with every other filter by
+  // AND (include first, then exclude). Each list holds at most 1000 values (more
+  // is INVALID_ARGUMENT). Without them nothing changes: orders are counted as
+  // before (posted, not deleted, not cancelled) whatever their scheme and status.
+  // For "posted, order scheme and approved" send shipment_schemes = ["Ордерная"]
+  // and order_statuses = ["Согласован"].
+  repeated string shipment_schemes = 27;
+  repeated string exclude_shipment_schemes = 28;
+  repeated string order_statuses = 29;
+  repeated string exclude_order_statuses = 30;
 }
 
 message OrderTurnoverRow {

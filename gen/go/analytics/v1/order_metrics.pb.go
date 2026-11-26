@@ -258,8 +258,24 @@ type GetOrderTurnoverRequest struct {
 	// unknown or deleted group excludes nothing, and a customer without a known
 	// group is never excluded by it. At most 1000 values.
 	ExcludeCustomerGroupIds []string `protobuf:"bytes,26,rep,name=exclude_customer_group_ids,json=excludeCustomerGroupIds,proto3" json:"exclude_customer_group_ids,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// Shipment scheme and processing status of the order as the source system
+	// states them, matched exactly (case and spelling as sent). The scheme is one
+	// of "Ордерная", "Безордерная", "Накладная"; the status is "НаСогласовании" or
+	// "Согласован". The empty string is a value of its own: it matches orders for
+	// which the source gave no scheme or no status (the status is empty for orders
+	// created before statuses existed). These filters act on whole orders, do not
+	// switch the result to line mode, and are combined with every other filter by
+	// AND (include first, then exclude). Each list holds at most 1000 values (more
+	// is INVALID_ARGUMENT). Without them nothing changes: orders are counted as
+	// before (posted, not deleted, not cancelled) whatever their scheme and status.
+	// For "posted, order scheme and approved" send shipment_schemes = ["Ордерная"]
+	// and order_statuses = ["Согласован"].
+	ShipmentSchemes        []string `protobuf:"bytes,27,rep,name=shipment_schemes,json=shipmentSchemes,proto3" json:"shipment_schemes,omitempty"`
+	ExcludeShipmentSchemes []string `protobuf:"bytes,28,rep,name=exclude_shipment_schemes,json=excludeShipmentSchemes,proto3" json:"exclude_shipment_schemes,omitempty"`
+	OrderStatuses          []string `protobuf:"bytes,29,rep,name=order_statuses,json=orderStatuses,proto3" json:"order_statuses,omitempty"`
+	ExcludeOrderStatuses   []string `protobuf:"bytes,30,rep,name=exclude_order_statuses,json=excludeOrderStatuses,proto3" json:"exclude_order_statuses,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *GetOrderTurnoverRequest) Reset() {
@@ -474,6 +490,34 @@ func (x *GetOrderTurnoverRequest) GetExcludeCustomerGroupIds() []string {
 	return nil
 }
 
+func (x *GetOrderTurnoverRequest) GetShipmentSchemes() []string {
+	if x != nil {
+		return x.ShipmentSchemes
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludeShipmentSchemes() []string {
+	if x != nil {
+		return x.ExcludeShipmentSchemes
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetOrderStatuses() []string {
+	if x != nil {
+		return x.OrderStatuses
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludeOrderStatuses() []string {
+	if x != nil {
+		return x.ExcludeOrderStatuses
+	}
+	return nil
+}
+
 type OrderTurnoverRow struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Start of the bucket (UTC); the bucket lasts until the next bucket start.
@@ -667,8 +711,7 @@ var File_analytics_v1_order_metrics_proto protoreflect.FileDescriptor
 
 const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"\n" +
-	" analytics/v1/order_metrics.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb4\n" +
-	"\n" +
+	" analytics/v1/order_metrics.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf6\v\n" +
 	"\x17GetOrderTurnoverRequest\x12.\n" +
 	"\x04from\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
 	"\x02to\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12;\n" +
@@ -698,7 +741,11 @@ const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"\x14product_category_ids\x18\x17 \x03(\tR\x12productCategoryIds\x12?\n" +
 	"\x1cexclude_product_category_ids\x18\x18 \x03(\tR\x19excludeProductCategoryIds\x12,\n" +
 	"\x12customer_group_ids\x18\x19 \x03(\tR\x10customerGroupIds\x12;\n" +
-	"\x1aexclude_customer_group_ids\x18\x1a \x03(\tR\x17excludeCustomerGroupIds\"\xe7\x03\n" +
+	"\x1aexclude_customer_group_ids\x18\x1a \x03(\tR\x17excludeCustomerGroupIds\x12)\n" +
+	"\x10shipment_schemes\x18\x1b \x03(\tR\x0fshipmentSchemes\x128\n" +
+	"\x18exclude_shipment_schemes\x18\x1c \x03(\tR\x16excludeShipmentSchemes\x12%\n" +
+	"\x0eorder_statuses\x18\x1d \x03(\tR\rorderStatuses\x124\n" +
+	"\x16exclude_order_statuses\x18\x1e \x03(\tR\x14excludeOrderStatuses\"\xe7\x03\n" +
 	"\x10OrderTurnoverRow\x12=\n" +
 	"\fperiod_start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\vperiodStart\x12!\n" +
 	"\fdimension_id\x18\x02 \x01(\tR\vdimensionId\x12\x1a\n" +

@@ -203,7 +203,10 @@ type GetOrderTurnoverRequest struct {
 	//   fields are filled with the lines that are NOT excluded, order_count counts
 	//   the orders that keep at least one line, and turnover, turnover_excluding_vat
 	//   and vat_total are left empty. A product without a known manufacturer is
-	//   never excluded by a manufacturer list.
+	//   never excluded by a manufacturer list or group: this includes a product
+	//   deleted at the source whose newest link version carries no manufacturer
+	//   (the include filters do not find it, the exclude filters leave its lines in
+	//   the sums); only exclude_product_ids drops it.
 	ExcludeCustomerIds            []string `protobuf:"bytes,14,rep,name=exclude_customer_ids,json=excludeCustomerIds,proto3" json:"exclude_customer_ids,omitempty"`
 	ExcludeOrganizationIds        []string `protobuf:"bytes,15,rep,name=exclude_organization_ids,json=excludeOrganizationIds,proto3" json:"exclude_organization_ids,omitempty"`
 	ExcludePointOfSaleIds         []string `protobuf:"bytes,16,rep,name=exclude_point_of_sale_ids,json=excludePointOfSaleIds,proto3" json:"exclude_point_of_sale_ids,omitempty"`

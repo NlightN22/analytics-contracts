@@ -33,7 +33,8 @@ type SalesMetricsServiceClient interface {
 	//
 	// Errors: UNAUTHENTICATED, INVALID_ARGUMENT (bad request), PERMISSION_DENIED
 	// (an organization outside the caller's scope), RESOURCE_EXHAUSTED (more than
-	// 5000 result rows or a query too heavy: narrow the period or the filters),
+	// 5000 result rows or a query too heavy: narrow the period or the filters; also
+	// a counterparty group list that expands to more than 20000 members),
 	// DEADLINE_EXCEEDED, CANCELLED, INTERNAL.
 	GetSalesTurnover(ctx context.Context, in *GetSalesTurnoverRequest, opts ...grpc.CallOption) (*GetSalesTurnoverResponse, error)
 }
@@ -67,7 +68,8 @@ type SalesMetricsServiceServer interface {
 	//
 	// Errors: UNAUTHENTICATED, INVALID_ARGUMENT (bad request), PERMISSION_DENIED
 	// (an organization outside the caller's scope), RESOURCE_EXHAUSTED (more than
-	// 5000 result rows or a query too heavy: narrow the period or the filters),
+	// 5000 result rows or a query too heavy: narrow the period or the filters; also
+	// a counterparty group list that expands to more than 20000 members),
 	// DEADLINE_EXCEEDED, CANCELLED, INTERNAL.
 	GetSalesTurnover(context.Context, *GetSalesTurnoverRequest) (*GetSalesTurnoverResponse, error)
 	mustEmbedUnimplementedSalesMetricsServiceServer()

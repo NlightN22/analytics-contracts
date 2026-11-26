@@ -270,6 +270,10 @@ type GetOrderTurnoverRequest struct {
 	// before (posted, not deleted, not cancelled) whatever their scheme and status.
 	// For "posted, order scheme and approved" send shipment_schemes = ["Ордерная"]
 	// and order_statuses = ["Согласован"].
+	// Until the source has re-sent all orders with the scheme, the scheme (and
+	// often the status) of older orders is empty in this service: the result of
+	// these filters is then incomplete, and the empty value also matches orders
+	// that are not loaded yet, not only orders that really have no value.
 	ShipmentSchemes        []string `protobuf:"bytes,27,rep,name=shipment_schemes,json=shipmentSchemes,proto3" json:"shipment_schemes,omitempty"`
 	ExcludeShipmentSchemes []string `protobuf:"bytes,28,rep,name=exclude_shipment_schemes,json=excludeShipmentSchemes,proto3" json:"exclude_shipment_schemes,omitempty"`
 	OrderStatuses          []string `protobuf:"bytes,29,rep,name=order_statuses,json=orderStatuses,proto3" json:"order_statuses,omitempty"`

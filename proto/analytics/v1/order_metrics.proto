@@ -181,6 +181,10 @@ message GetOrderTurnoverRequest {
   // before (posted, not deleted, not cancelled) whatever their scheme and status.
   // For "posted, order scheme and approved" send shipment_schemes = ["Ордерная"]
   // and order_statuses = ["Согласован"].
+  // Until the source has re-sent all orders with the scheme, the scheme (and
+  // often the status) of older orders is empty in this service: the result of
+  // these filters is then incomplete, and the empty value also matches orders
+  // that are not loaded yet, not only orders that really have no value.
   repeated string shipment_schemes = 27;
   repeated string exclude_shipment_schemes = 28;
   repeated string order_statuses = 29;

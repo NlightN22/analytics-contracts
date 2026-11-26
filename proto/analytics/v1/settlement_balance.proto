@@ -75,13 +75,18 @@ message GetSettlementBalancesResponse {
   // opening_balance and closing_balance, so closing = opening + debit - credit
   // holds only when this is zero.
   int64 combinations_without_balance = 2;
-  // Combinations whose balance snapshot does not agree with the register
-  // entries we hold (closing - opening differs from the sum of the entries
-  // since the snapshot's opening date, or the opening is unknown). It means
-  // entries are still missing or were not delivered; the figures of such a
-  // combination may be off by the difference.
+  // Combinations (organization, counterparty, contract and currency) whose
+  // balance snapshot does not agree with the register entries we hold:
+  // closing - opening differs from the sum of the entries dated since the
+  // snapshot's opening date, or the opening is unknown. It means entries are
+  // still missing or were not delivered, or the snapshot is older than the
+  // newest entries; the figures of such a combination may be off by the
+  // difference.
   int64 combinations_not_reconciled = 3;
   // Currency values that the currency catalog cannot confirm; same meaning as
   // in GetSalesTurnoverResponse.
   repeated string unresolved_currencies = 4;
+  // Register entries that carry neither an entry date nor a document date.
+  // They cannot be placed in any period, so they are left out of every figure.
+  int64 entries_without_date = 5;
 }

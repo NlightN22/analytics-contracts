@@ -280,17 +280,22 @@ type GetSettlementBalancesResponse struct {
 	// opening_balance and closing_balance, so closing = opening + debit - credit
 	// holds only when this is zero.
 	CombinationsWithoutBalance int64 `protobuf:"varint,2,opt,name=combinations_without_balance,json=combinationsWithoutBalance,proto3" json:"combinations_without_balance,omitempty"`
-	// Combinations whose balance snapshot does not agree with the register
-	// entries we hold (closing - opening differs from the sum of the entries
-	// since the snapshot's opening date, or the opening is unknown). It means
-	// entries are still missing or were not delivered; the figures of such a
-	// combination may be off by the difference.
+	// Combinations (organization, counterparty, contract and currency) whose
+	// balance snapshot does not agree with the register entries we hold:
+	// closing - opening differs from the sum of the entries dated since the
+	// snapshot's opening date, or the opening is unknown. It means entries are
+	// still missing or were not delivered, or the snapshot is older than the
+	// newest entries; the figures of such a combination may be off by the
+	// difference.
 	CombinationsNotReconciled int64 `protobuf:"varint,3,opt,name=combinations_not_reconciled,json=combinationsNotReconciled,proto3" json:"combinations_not_reconciled,omitempty"`
 	// Currency values that the currency catalog cannot confirm; same meaning as
 	// in GetSalesTurnoverResponse.
 	UnresolvedCurrencies []string `protobuf:"bytes,4,rep,name=unresolved_currencies,json=unresolvedCurrencies,proto3" json:"unresolved_currencies,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// Register entries that carry neither an entry date nor a document date.
+	// They cannot be placed in any period, so they are left out of every figure.
+	EntriesWithoutDate int64 `protobuf:"varint,5,opt,name=entries_without_date,json=entriesWithoutDate,proto3" json:"entries_without_date,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *GetSettlementBalancesResponse) Reset() {
@@ -351,6 +356,13 @@ func (x *GetSettlementBalancesResponse) GetUnresolvedCurrencies() []string {
 	return nil
 }
 
+func (x *GetSettlementBalancesResponse) GetEntriesWithoutDate() int64 {
+	if x != nil {
+		return x.EntriesWithoutDate
+	}
+	return 0
+}
+
 var File_analytics_v1_settlement_balance_proto protoreflect.FileDescriptor
 
 const file_analytics_v1_settlement_balance_proto_rawDesc = "" +
@@ -370,12 +382,13 @@ const file_analytics_v1_settlement_balance_proto_rawDesc = "" +
 	"\x05debit\x18\x04 \x01(\tR\x05debit\x12\x16\n" +
 	"\x06credit\x18\x05 \x01(\tR\x06credit\x12'\n" +
 	"\x0fclosing_balance\x18\x06 \x01(\tR\x0eclosingBalance\x12\"\n" +
-	"\fcombinations\x18\a \x01(\x03R\fcombinations\"\x8e\x02\n" +
+	"\fcombinations\x18\a \x01(\x03R\fcombinations\"\xc0\x02\n" +
 	"\x1dGetSettlementBalancesResponse\x126\n" +
 	"\x04rows\x18\x01 \x03(\v2\".analytics.v1.SettlementBalanceRowR\x04rows\x12@\n" +
 	"\x1ccombinations_without_balance\x18\x02 \x01(\x03R\x1acombinationsWithoutBalance\x12>\n" +
 	"\x1bcombinations_not_reconciled\x18\x03 \x01(\x03R\x19combinationsNotReconciled\x123\n" +
-	"\x15unresolved_currencies\x18\x04 \x03(\tR\x14unresolvedCurrencies*\xfa\x01\n" +
+	"\x15unresolved_currencies\x18\x04 \x03(\tR\x14unresolvedCurrencies\x120\n" +
+	"\x14entries_without_date\x18\x05 \x01(\x03R\x12entriesWithoutDate*\xfa\x01\n" +
 	"\x1aSettlementBalanceDimension\x12,\n" +
 	"(SETTLEMENT_BALANCE_DIMENSION_UNSPECIFIED\x10\x00\x12%\n" +
 	"!SETTLEMENT_BALANCE_DIMENSION_NONE\x10\x01\x12-\n" +

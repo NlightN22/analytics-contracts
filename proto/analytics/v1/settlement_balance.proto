@@ -41,6 +41,10 @@ message GetSettlementBalancesRequest {
   SettlementBalanceDimension dimension = 3;
   // Empty filter lists mean no filtering; each list holds at most 1000 values.
   // Results are always limited to the organizations the caller may see.
+  // A combination that has a balance snapshot is returned for any period (its
+  // balance exists even without entries), so a request without filters on a
+  // large registry can exceed 5000 rows and fail with RESOURCE_EXHAUSTED: use
+  // filters or a coarser dimension.
   repeated string counterparty_ids = 4;
   repeated string organization_ids = 5;
   repeated string contract_ids = 6;
@@ -64,14 +68,16 @@ message SettlementBalanceRow {
   string credit = 5;
   // Balance at the end of the period: opening_balance + debit - credit.
   string closing_balance = 6;
-  // Number of organization/counterparty/contract combinations summed in the row.
+  // Number of organization/counterparty/contract/currency combinations summed
+  // in the row: those with a balance snapshot or with entries in the period.
   int64 combinations = 7;
 }
 
 message GetSettlementBalancesResponse {
   repeated SettlementBalanceRow rows = 1;
   // Combinations that have register entries in the period but no balance
-  // snapshot yet. Their debit and credit are counted but they add nothing to
+  // snapshot of the same currency (the snapshot is missing, deleted, or in
+  // another currency than the entries). Their debit and credit are counted but they add nothing to
   // opening_balance and closing_balance, so closing = opening + debit - credit
   // holds only when this is zero.
   int64 combinations_without_balance = 2;

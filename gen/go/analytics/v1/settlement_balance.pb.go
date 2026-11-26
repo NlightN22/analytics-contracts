@@ -89,6 +89,10 @@ type GetSettlementBalancesRequest struct {
 	Dimension SettlementBalanceDimension `protobuf:"varint,3,opt,name=dimension,proto3,enum=analytics.v1.SettlementBalanceDimension" json:"dimension,omitempty"`
 	// Empty filter lists mean no filtering; each list holds at most 1000 values.
 	// Results are always limited to the organizations the caller may see.
+	// A combination that has a balance snapshot is returned for any period (its
+	// balance exists even without entries), so a request without filters on a
+	// large registry can exceed 5000 rows and fail with RESOURCE_EXHAUSTED: use
+	// filters or a coarser dimension.
 	CounterpartyIds []string `protobuf:"bytes,4,rep,name=counterparty_ids,json=counterpartyIds,proto3" json:"counterparty_ids,omitempty"`
 	OrganizationIds []string `protobuf:"bytes,5,rep,name=organization_ids,json=organizationIds,proto3" json:"organization_ids,omitempty"`
 	ContractIds     []string `protobuf:"bytes,6,rep,name=contract_ids,json=contractIds,proto3" json:"contract_ids,omitempty"`
@@ -187,7 +191,8 @@ type SettlementBalanceRow struct {
 	Credit string `protobuf:"bytes,5,opt,name=credit,proto3" json:"credit,omitempty"`
 	// Balance at the end of the period: opening_balance + debit - credit.
 	ClosingBalance string `protobuf:"bytes,6,opt,name=closing_balance,json=closingBalance,proto3" json:"closing_balance,omitempty"`
-	// Number of organization/counterparty/contract combinations summed in the row.
+	// Number of organization/counterparty/contract/currency combinations summed
+	// in the row: those with a balance snapshot or with entries in the period.
 	Combinations  int64 `protobuf:"varint,7,opt,name=combinations,proto3" json:"combinations,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -276,7 +281,8 @@ type GetSettlementBalancesResponse struct {
 	state protoimpl.MessageState  `protogen:"open.v1"`
 	Rows  []*SettlementBalanceRow `protobuf:"bytes,1,rep,name=rows,proto3" json:"rows,omitempty"`
 	// Combinations that have register entries in the period but no balance
-	// snapshot yet. Their debit and credit are counted but they add nothing to
+	// snapshot of the same currency (the snapshot is missing, deleted, or in
+	// another currency than the entries). Their debit and credit are counted but they add nothing to
 	// opening_balance and closing_balance, so closing = opening + debit - credit
 	// holds only when this is zero.
 	CombinationsWithoutBalance int64 `protobuf:"varint,2,opt,name=combinations_without_balance,json=combinationsWithoutBalance,proto3" json:"combinations_without_balance,omitempty"`

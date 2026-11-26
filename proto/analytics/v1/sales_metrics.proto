@@ -52,6 +52,20 @@ message GetSalesTurnoverRequest {
   repeated string counterparty_manager_ids = 9;
   // Same meaning as in GetOrderTurnoverRequest.
   bool main_manager_only = 10;
+  // Exclude lists (at most 1000 values each, more is INVALID_ARGUMENT, empty
+  // means no exclusion; combined with the include list of the same field by
+  // AND). A document, return or correction entry whose counterparty,
+  // organization or contract is listed is left out. exclude_counterparty_manager_ids
+  // follows GetOrderTurnoverRequest: without SALES_DIMENSION_COUNTERPARTY_MANAGER
+  // a document is dropped when any of its counterparty's managers is listed
+  // (main_manager_only applies); with it only the listed managers' rows are
+  // dropped. Documents of counterparties without a known manager are never
+  // dropped. Sales documents have no product lines, so product, manufacturer
+  // and group filters are not offered here.
+  repeated string exclude_counterparty_ids = 11;
+  repeated string exclude_organization_ids = 12;
+  repeated string exclude_contract_ids = 13;
+  repeated string exclude_counterparty_manager_ids = 14;
 }
 
 // One measure of a bucket. Document totals are summed as the source reports

@@ -82,10 +82,50 @@ message GetOrderTurnoverRequest {
   repeated string product_ids = 12;
   // Manufacturer ids as linked to the products by the source system. Only the
   // product's direct manufacturer matches: manufacturer groups (parents) are
-  // not expanded, so a group id matches nothing. A product deleted at the source
-  // is not matched by manufacturer (its newest link version carries none), while
-  // product_ids still matches it.
+  // not expanded, so a group id matches nothing (use manufacturer_group_ids for
+  // that). A product deleted at the source is not matched by manufacturer (its
+  // newest link version carries none), while product_ids still matches it.
   repeated string manufacturer_ids = 13;
+
+  // Exclude lists: an order or line that matches any value of an exclude list
+  // is left out. Each list holds at most 1000 values (more is INVALID_ARGUMENT),
+  // empty means no exclusion, and an exclude list is combined with the include
+  // list of the same field by AND (include first, then exclude). The exclusion
+  // follows the semantics of the matching include filter:
+  // - customer, organization, point of sale and manager lists drop whole
+  //   orders; they do not widen the caller's organization scope.
+  // - counterparty managers (with the same main_manager_only rule): without
+  //   DIMENSION_COUNTERPARTY_MANAGER an order is dropped when ANY of its
+  //   counterparty's managers is listed; with that dimension only the rows of
+  //   the listed managers are dropped (the other managers of the same order keep
+  //   their rows). Orders without a known manager are never dropped.
+  // - product, manufacturer and manufacturer group lists act on lines and, like
+  //   the product include filters, switch the result to line mode: product_*
+  //   fields are filled with the lines that are NOT excluded, order_count counts
+  //   the orders that keep at least one line, and turnover, turnover_excluding_vat
+  //   and vat_total are left empty. A product without a known manufacturer is
+  //   never excluded by a manufacturer list.
+  repeated string exclude_customer_ids = 14;
+  repeated string exclude_organization_ids = 15;
+  repeated string exclude_point_of_sale_ids = 16;
+  repeated string exclude_manager_ids = 17;
+  repeated string exclude_counterparty_manager_ids = 18;
+  repeated string exclude_product_ids = 19;
+  repeated string exclude_manufacturer_ids = 20;
+
+  // Manufacturer groups expanded at query time: a group id matches the products
+  // of its own manufacturer and of every manufacturer below it in the
+  // manufacturer hierarchy (parent links, any depth up to 32 levels). Deleted
+  // manufacturers are not members and are not traversed. An unknown or deleted
+  // group id matches nothing: when manufacturer_group_ids is set and none of
+  // its values is a live group the result has no rows, never the unfiltered
+  // answer. Combined with manufacturer_ids and the other include filters by AND;
+  // at most 1000 values; switches the result to line mode like the other
+  // product filters.
+  repeated string manufacturer_group_ids = 21;
+  // Products of these groups (expanded as in manufacturer_group_ids) are left
+  // out. An unknown or deleted group id excludes nothing. At most 1000 values.
+  repeated string exclude_manufacturer_group_ids = 22;
 }
 
 message OrderTurnoverRow {

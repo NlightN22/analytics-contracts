@@ -104,8 +104,22 @@ type GetSalesTurnoverRequest struct {
 	CounterpartyManagerIds []string `protobuf:"bytes,9,rep,name=counterparty_manager_ids,json=counterpartyManagerIds,proto3" json:"counterparty_manager_ids,omitempty"`
 	// Same meaning as in GetOrderTurnoverRequest.
 	MainManagerOnly bool `protobuf:"varint,10,opt,name=main_manager_only,json=mainManagerOnly,proto3" json:"main_manager_only,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Exclude lists (at most 1000 values each, more is INVALID_ARGUMENT, empty
+	// means no exclusion; combined with the include list of the same field by
+	// AND). A document, return or correction entry whose counterparty,
+	// organization or contract is listed is left out. exclude_counterparty_manager_ids
+	// follows GetOrderTurnoverRequest: without SALES_DIMENSION_COUNTERPARTY_MANAGER
+	// a document is dropped when any of its counterparty's managers is listed
+	// (main_manager_only applies); with it only the listed managers' rows are
+	// dropped. Documents of counterparties without a known manager are never
+	// dropped. Sales documents have no product lines, so product, manufacturer
+	// and group filters are not offered here.
+	ExcludeCounterpartyIds        []string `protobuf:"bytes,11,rep,name=exclude_counterparty_ids,json=excludeCounterpartyIds,proto3" json:"exclude_counterparty_ids,omitempty"`
+	ExcludeOrganizationIds        []string `protobuf:"bytes,12,rep,name=exclude_organization_ids,json=excludeOrganizationIds,proto3" json:"exclude_organization_ids,omitempty"`
+	ExcludeContractIds            []string `protobuf:"bytes,13,rep,name=exclude_contract_ids,json=excludeContractIds,proto3" json:"exclude_contract_ids,omitempty"`
+	ExcludeCounterpartyManagerIds []string `protobuf:"bytes,14,rep,name=exclude_counterparty_manager_ids,json=excludeCounterpartyManagerIds,proto3" json:"exclude_counterparty_manager_ids,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *GetSalesTurnoverRequest) Reset() {
@@ -206,6 +220,34 @@ func (x *GetSalesTurnoverRequest) GetMainManagerOnly() bool {
 		return x.MainManagerOnly
 	}
 	return false
+}
+
+func (x *GetSalesTurnoverRequest) GetExcludeCounterpartyIds() []string {
+	if x != nil {
+		return x.ExcludeCounterpartyIds
+	}
+	return nil
+}
+
+func (x *GetSalesTurnoverRequest) GetExcludeOrganizationIds() []string {
+	if x != nil {
+		return x.ExcludeOrganizationIds
+	}
+	return nil
+}
+
+func (x *GetSalesTurnoverRequest) GetExcludeContractIds() []string {
+	if x != nil {
+		return x.ExcludeContractIds
+	}
+	return nil
+}
+
+func (x *GetSalesTurnoverRequest) GetExcludeCounterpartyManagerIds() []string {
+	if x != nil {
+		return x.ExcludeCounterpartyManagerIds
+	}
+	return nil
 }
 
 // One measure of a bucket. Document totals are summed as the source reports
@@ -466,7 +508,7 @@ var File_analytics_v1_sales_metrics_proto protoreflect.FileDescriptor
 
 const file_analytics_v1_sales_metrics_proto_rawDesc = "" +
 	"\n" +
-	" analytics/v1/sales_metrics.proto\x12\fanalytics.v1\x1a analytics/v1/order_metrics.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xea\x03\n" +
+	" analytics/v1/sales_metrics.proto\x12\fanalytics.v1\x1a analytics/v1/order_metrics.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd9\x05\n" +
 	"\x17GetSalesTurnoverRequest\x12.\n" +
 	"\x04from\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
 	"\x02to\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12;\n" +
@@ -478,7 +520,11 @@ const file_analytics_v1_sales_metrics_proto_rawDesc = "" +
 	"\fcontract_ids\x18\b \x03(\tR\vcontractIds\x128\n" +
 	"\x18counterparty_manager_ids\x18\t \x03(\tR\x16counterpartyManagerIds\x12*\n" +
 	"\x11main_manager_only\x18\n" +
-	" \x01(\bR\x0fmainManagerOnly\"\xc3\x01\n" +
+	" \x01(\bR\x0fmainManagerOnly\x128\n" +
+	"\x18exclude_counterparty_ids\x18\v \x03(\tR\x16excludeCounterpartyIds\x128\n" +
+	"\x18exclude_organization_ids\x18\f \x03(\tR\x16excludeOrganizationIds\x120\n" +
+	"\x14exclude_contract_ids\x18\r \x03(\tR\x12excludeContractIds\x12G\n" +
+	" exclude_counterparty_manager_ids\x18\x0e \x03(\tR\x1dexcludeCounterpartyManagerIds\"\xc3\x01\n" +
 	"\vSalesAmount\x12\x16\n" +
 	"\x06amount\x18\x01 \x01(\tR\x06amount\x12;\n" +
 	"\x1aamount_excluding_vat_basis\x18\x02 \x01(\tR\x17amountExcludingVatBasis\x12%\n" +

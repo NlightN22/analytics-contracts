@@ -182,12 +182,50 @@ type GetOrderTurnoverRequest struct {
 	ProductIds []string `protobuf:"bytes,12,rep,name=product_ids,json=productIds,proto3" json:"product_ids,omitempty"`
 	// Manufacturer ids as linked to the products by the source system. Only the
 	// product's direct manufacturer matches: manufacturer groups (parents) are
-	// not expanded, so a group id matches nothing. A product deleted at the source
-	// is not matched by manufacturer (its newest link version carries none), while
-	// product_ids still matches it.
+	// not expanded, so a group id matches nothing (use manufacturer_group_ids for
+	// that). A product deleted at the source is not matched by manufacturer (its
+	// newest link version carries none), while product_ids still matches it.
 	ManufacturerIds []string `protobuf:"bytes,13,rep,name=manufacturer_ids,json=manufacturerIds,proto3" json:"manufacturer_ids,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Exclude lists: an order or line that matches any value of an exclude list
+	// is left out. Each list holds at most 1000 values (more is INVALID_ARGUMENT),
+	// empty means no exclusion, and an exclude list is combined with the include
+	// list of the same field by AND (include first, then exclude). The exclusion
+	// follows the semantics of the matching include filter:
+	// - customer, organization, point of sale and manager lists drop whole
+	//   orders; they do not widen the caller's organization scope.
+	// - counterparty managers (with the same main_manager_only rule): without
+	//   DIMENSION_COUNTERPARTY_MANAGER an order is dropped when ANY of its
+	//   counterparty's managers is listed; with that dimension only the rows of
+	//   the listed managers are dropped (the other managers of the same order keep
+	//   their rows). Orders without a known manager are never dropped.
+	// - product, manufacturer and manufacturer group lists act on lines and, like
+	//   the product include filters, switch the result to line mode: product_*
+	//   fields are filled with the lines that are NOT excluded, order_count counts
+	//   the orders that keep at least one line, and turnover, turnover_excluding_vat
+	//   and vat_total are left empty. A product without a known manufacturer is
+	//   never excluded by a manufacturer list.
+	ExcludeCustomerIds            []string `protobuf:"bytes,14,rep,name=exclude_customer_ids,json=excludeCustomerIds,proto3" json:"exclude_customer_ids,omitempty"`
+	ExcludeOrganizationIds        []string `protobuf:"bytes,15,rep,name=exclude_organization_ids,json=excludeOrganizationIds,proto3" json:"exclude_organization_ids,omitempty"`
+	ExcludePointOfSaleIds         []string `protobuf:"bytes,16,rep,name=exclude_point_of_sale_ids,json=excludePointOfSaleIds,proto3" json:"exclude_point_of_sale_ids,omitempty"`
+	ExcludeManagerIds             []string `protobuf:"bytes,17,rep,name=exclude_manager_ids,json=excludeManagerIds,proto3" json:"exclude_manager_ids,omitempty"`
+	ExcludeCounterpartyManagerIds []string `protobuf:"bytes,18,rep,name=exclude_counterparty_manager_ids,json=excludeCounterpartyManagerIds,proto3" json:"exclude_counterparty_manager_ids,omitempty"`
+	ExcludeProductIds             []string `protobuf:"bytes,19,rep,name=exclude_product_ids,json=excludeProductIds,proto3" json:"exclude_product_ids,omitempty"`
+	ExcludeManufacturerIds        []string `protobuf:"bytes,20,rep,name=exclude_manufacturer_ids,json=excludeManufacturerIds,proto3" json:"exclude_manufacturer_ids,omitempty"`
+	// Manufacturer groups expanded at query time: a group id matches the products
+	// of its own manufacturer and of every manufacturer below it in the
+	// manufacturer hierarchy (parent links, any depth up to 32 levels). Deleted
+	// manufacturers are not members and are not traversed. An unknown or deleted
+	// group id matches nothing: when manufacturer_group_ids is set and none of
+	// its values is a live group the result has no rows, never the unfiltered
+	// answer. Combined with manufacturer_ids and the other include filters by AND;
+	// at most 1000 values; switches the result to line mode like the other
+	// product filters.
+	ManufacturerGroupIds []string `protobuf:"bytes,21,rep,name=manufacturer_group_ids,json=manufacturerGroupIds,proto3" json:"manufacturer_group_ids,omitempty"`
+	// Products of these groups (expanded as in manufacturer_group_ids) are left
+	// out. An unknown or deleted group id excludes nothing. At most 1000 values.
+	ExcludeManufacturerGroupIds []string `protobuf:"bytes,22,rep,name=exclude_manufacturer_group_ids,json=excludeManufacturerGroupIds,proto3" json:"exclude_manufacturer_group_ids,omitempty"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
 }
 
 func (x *GetOrderTurnoverRequest) Reset() {
@@ -307,6 +345,69 @@ func (x *GetOrderTurnoverRequest) GetProductIds() []string {
 func (x *GetOrderTurnoverRequest) GetManufacturerIds() []string {
 	if x != nil {
 		return x.ManufacturerIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludeCustomerIds() []string {
+	if x != nil {
+		return x.ExcludeCustomerIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludeOrganizationIds() []string {
+	if x != nil {
+		return x.ExcludeOrganizationIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludePointOfSaleIds() []string {
+	if x != nil {
+		return x.ExcludePointOfSaleIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludeManagerIds() []string {
+	if x != nil {
+		return x.ExcludeManagerIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludeCounterpartyManagerIds() []string {
+	if x != nil {
+		return x.ExcludeCounterpartyManagerIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludeProductIds() []string {
+	if x != nil {
+		return x.ExcludeProductIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludeManufacturerIds() []string {
+	if x != nil {
+		return x.ExcludeManufacturerIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetManufacturerGroupIds() []string {
+	if x != nil {
+		return x.ManufacturerGroupIds
+	}
+	return nil
+}
+
+func (x *GetOrderTurnoverRequest) GetExcludeManufacturerGroupIds() []string {
+	if x != nil {
+		return x.ExcludeManufacturerGroupIds
 	}
 	return nil
 }
@@ -504,7 +605,7 @@ var File_analytics_v1_order_metrics_proto protoreflect.FileDescriptor
 
 const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"\n" +
-	" analytics/v1/order_metrics.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd2\x04\n" +
+	" analytics/v1/order_metrics.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd6\b\n" +
 	"\x17GetOrderTurnoverRequest\x12.\n" +
 	"\x04from\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
 	"\x02to\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12;\n" +
@@ -521,7 +622,16 @@ const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"\x11main_manager_only\x18\v \x01(\bR\x0fmainManagerOnly\x12\x1f\n" +
 	"\vproduct_ids\x18\f \x03(\tR\n" +
 	"productIds\x12)\n" +
-	"\x10manufacturer_ids\x18\r \x03(\tR\x0fmanufacturerIds\"\xe7\x03\n" +
+	"\x10manufacturer_ids\x18\r \x03(\tR\x0fmanufacturerIds\x120\n" +
+	"\x14exclude_customer_ids\x18\x0e \x03(\tR\x12excludeCustomerIds\x128\n" +
+	"\x18exclude_organization_ids\x18\x0f \x03(\tR\x16excludeOrganizationIds\x128\n" +
+	"\x19exclude_point_of_sale_ids\x18\x10 \x03(\tR\x15excludePointOfSaleIds\x12.\n" +
+	"\x13exclude_manager_ids\x18\x11 \x03(\tR\x11excludeManagerIds\x12G\n" +
+	" exclude_counterparty_manager_ids\x18\x12 \x03(\tR\x1dexcludeCounterpartyManagerIds\x12.\n" +
+	"\x13exclude_product_ids\x18\x13 \x03(\tR\x11excludeProductIds\x128\n" +
+	"\x18exclude_manufacturer_ids\x18\x14 \x03(\tR\x16excludeManufacturerIds\x124\n" +
+	"\x16manufacturer_group_ids\x18\x15 \x03(\tR\x14manufacturerGroupIds\x12C\n" +
+	"\x1eexclude_manufacturer_group_ids\x18\x16 \x03(\tR\x1bexcludeManufacturerGroupIds\"\xe7\x03\n" +
 	"\x10OrderTurnoverRow\x12=\n" +
 	"\fperiod_start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\vperiodStart\x12!\n" +
 	"\fdimension_id\x18\x02 \x01(\tR\vdimensionId\x12\x1a\n" +

@@ -28,7 +28,11 @@ const (
 type OrderMetricsServiceClient interface {
 	// Order turnover: the sum of order amounts as reported by the source system.
 	// It is not sales (realization) turnover. Deleted and cancelled orders are
-	// not counted; orders without an order date are not returned.
+	// not counted, and neither are orders whose latest version says they are
+	// not posted (is_posted = false). An order whose latest version carries no
+	// posting flag (not yet republished by the source) is still counted, and
+	// orders the source cannot publish without a customer are not delivered at
+	// all. Orders without an order date are not returned.
 	//
 	// Errors: UNAUTHENTICATED (missing or invalid credentials), INVALID_ARGUMENT
 	// (bad request), PERMISSION_DENIED (an organization outside the caller's
@@ -62,7 +66,11 @@ func (c *orderMetricsServiceClient) GetOrderTurnover(ctx context.Context, in *Ge
 type OrderMetricsServiceServer interface {
 	// Order turnover: the sum of order amounts as reported by the source system.
 	// It is not sales (realization) turnover. Deleted and cancelled orders are
-	// not counted; orders without an order date are not returned.
+	// not counted, and neither are orders whose latest version says they are
+	// not posted (is_posted = false). An order whose latest version carries no
+	// posting flag (not yet republished by the source) is still counted, and
+	// orders the source cannot publish without a customer are not delivered at
+	// all. Orders without an order date are not returned.
 	//
 	// Errors: UNAUTHENTICATED (missing or invalid credentials), INVALID_ARGUMENT
 	// (bad request), PERMISSION_DENIED (an organization outside the caller's

@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package analytics.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/NlightN22/analytics-contracts/gen/go/analytics/v1;analyticsv1";
+
+service SettlementBalanceService {
+  // Mutual settlements with counterparties: the balance at the start of a
+  // period, the debit and credit turnover inside it and the balance at its
+  // end, per organization, counterparty and contract. A positive balance
+  // means the counterparty owes the organization (receivable); a negative one
+  // means the organization owes the counterparty. The source of truth is the
+  // accounting register of mutual settlements; the sign convention is
+  // reported by the source and not yet confirmed by its owner.
+  //
+  // Errors: UNAUTHENTICATED, INVALID_ARGUMENT (bad request), PERMISSION_DENIED
+  // (an organization outside the caller's scope), RESOURCE_EXHAUSTED (more than
+  // 5000 result rows or a query too heavy: narrow the period or the filters),
+  // DEADLINE_EXCEEDED, CANCELLED, INTERNAL.
+  rpc GetSettlementBalances(GetSettlementBalancesRequest) returns (GetSettlementBalancesResponse);
+}
+
+enum SettlementBalanceDimension {
+  SETTLEMENT_BALANCE_DIMENSION_UNSPECIFIED = 0;
+  SETTLEMENT_BALANCE_DIMENSION_NONE = 1;
+  SETTLEMENT_BALANCE_DIMENSION_COUNTERPARTY = 2;
+  SETTLEMENT_BALANCE_DIMENSION_ORGANIZATION = 3;
+  SETTLEMENT_BALANCE_DIMENSION_CONTRACT = 4;
+}
+
+message GetSettlementBalancesRequest {
+  // Turnover is cut by the date of the register entry: from is inclusive, to
+  // is exclusive. Both are required, must lie between 2000-01-01 and
+  // 2100-01-01, and the period may not exceed 5 years. The opening balance is
+  // the balance at from, the closing balance the balance at to.
+  google.protobuf.Timestamp from = 1;
+  google.protobuf.Timestamp to = 2;
+  // Required: UNSPECIFIED is rejected, use NONE for a single total.
+  SettlementBalanceDimension dimension = 3;
+  // Empty filter lists mean no filtering; each list holds at most 1000 values.
+  // Results are always limited to the organizations the caller may see.
+  repeated string counterparty_ids = 4;
+  repeated string organization_ids = 5;
+  repeated string contract_ids = 6;
+}
+
+// Figures of one group in one currency. Currencies are never added together:
+// the currency is the one of the contract as reported by the source. All
+// amounts are decimal strings with exactly two fraction digits and a dot, no
+// exponent; balances may be negative ("-12.50"), debit and credit are never
+// negative.
+message SettlementBalanceRow {
+  // Empty when the dimension is NONE.
+  string dimension_id = 1;
+  string currency = 2;
+  // Balance at the start of the period (receivable positive).
+  string opening_balance = 3;
+  // Sum of the register entries of the period that increase the receivable.
+  string debit = 4;
+  // Sum of the register entries of the period that decrease the receivable,
+  // as a positive number.
+  string credit = 5;
+  // Balance at the end of the period: opening_balance + debit - credit.
+  string closing_balance = 6;
+  // Number of organization/counterparty/contract combinations summed in the row.
+  int64 combinations = 7;
+}
+
+message GetSettlementBalancesResponse {
+  repeated SettlementBalanceRow rows = 1;
+  // Combinations that have register entries in the period but no balance
+  // snapshot yet. Their debit and credit are counted but they add nothing to
+  // opening_balance and closing_balance, so closing = opening + debit - credit
+  // holds only when this is zero.
+  int64 combinations_without_balance = 2;
+  // Combinations whose balance snapshot does not agree with the register
+  // entries we hold (closing - opening differs from the sum of the entries
+  // since the snapshot's opening date, or the opening is unknown). It means
+  // entries are still missing or were not delivered; the figures of such a
+  // combination may be off by the difference.
+  int64 combinations_not_reconciled = 3;
+  // Currency values that the currency catalog cannot confirm; same meaning as
+  // in GetSalesTurnoverResponse.
+  repeated string unresolved_currencies = 4;
+}

@@ -55,7 +55,9 @@ type OrderMetricsServiceClient interface {
 	//
 	// Errors: UNAUTHENTICATED, INVALID_ARGUMENT (kind is not set, a period that is
 	// not valid, only one of from and to), PERMISSION_DENIED (an organization
-	// outside the caller's scope), DEADLINE_EXCEEDED, CANCELLED, INTERNAL.
+	// outside the caller's scope), RESOURCE_EXHAUSTED (more than 1000 distinct
+	// values: narrow the period or the organizations), DEADLINE_EXCEEDED, CANCELLED,
+	// INTERNAL.
 	ListOrderTurnoverFilterValues(ctx context.Context, in *ListOrderTurnoverFilterValuesRequest, opts ...grpc.CallOption) (*ListOrderTurnoverFilterValuesResponse, error)
 }
 
@@ -119,7 +121,9 @@ type OrderMetricsServiceServer interface {
 	//
 	// Errors: UNAUTHENTICATED, INVALID_ARGUMENT (kind is not set, a period that is
 	// not valid, only one of from and to), PERMISSION_DENIED (an organization
-	// outside the caller's scope), DEADLINE_EXCEEDED, CANCELLED, INTERNAL.
+	// outside the caller's scope), RESOURCE_EXHAUSTED (more than 1000 distinct
+	// values: narrow the period or the organizations), DEADLINE_EXCEEDED, CANCELLED,
+	// INTERNAL.
 	ListOrderTurnoverFilterValues(context.Context, *ListOrderTurnoverFilterValuesRequest) (*ListOrderTurnoverFilterValuesResponse, error)
 	mustEmbedUnimplementedOrderMetricsServiceServer()
 }

@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OrderMetricsService_GetOrderTurnover_FullMethodName = "/analytics.v1.OrderMetricsService/GetOrderTurnover"
+	OrderMetricsService_GetOrderTurnover_FullMethodName              = "/analytics.v1.OrderMetricsService/GetOrderTurnover"
+	OrderMetricsService_ListOrderTurnoverFilterValues_FullMethodName = "/analytics.v1.OrderMetricsService/ListOrderTurnoverFilterValues"
 )
 
 // OrderMetricsServiceClient is the client API for OrderMetricsService service.
@@ -42,6 +43,20 @@ type OrderMetricsServiceClient interface {
 	// members: use narrower groups), DEADLINE_EXCEEDED, CANCELLED (the caller gave
 	// up), INTERNAL (a server fault, retry later).
 	GetOrderTurnover(ctx context.Context, in *GetOrderTurnoverRequest, opts ...grpc.CallOption) (*GetOrderTurnoverResponse, error)
+	// The values the shipment scheme or the processing status of the orders
+	// actually have, with the number of orders of each value, so that a client can
+	// offer them as a choice list for the shipment_schemes / order_statuses
+	// filters of GetOrderTurnover. The orders are the ones GetOrderTurnover counts
+	// without any filter (posted, not deleted, not cancelled, with an order date),
+	// limited to the organizations the caller is allowed to see. The empty string is
+	// a value of its own: orders for which the source gave no scheme or no status.
+	// Until the source has re-sent all orders with the scheme, the empty value also
+	// counts orders that are not loaded yet.
+	//
+	// Errors: UNAUTHENTICATED, INVALID_ARGUMENT (kind is not set, a period that is
+	// not valid, only one of from and to), PERMISSION_DENIED (an organization
+	// outside the caller's scope), DEADLINE_EXCEEDED, CANCELLED, INTERNAL.
+	ListOrderTurnoverFilterValues(ctx context.Context, in *ListOrderTurnoverFilterValuesRequest, opts ...grpc.CallOption) (*ListOrderTurnoverFilterValuesResponse, error)
 }
 
 type orderMetricsServiceClient struct {
@@ -56,6 +71,16 @@ func (c *orderMetricsServiceClient) GetOrderTurnover(ctx context.Context, in *Ge
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetOrderTurnoverResponse)
 	err := c.cc.Invoke(ctx, OrderMetricsService_GetOrderTurnover_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderMetricsServiceClient) ListOrderTurnoverFilterValues(ctx context.Context, in *ListOrderTurnoverFilterValuesRequest, opts ...grpc.CallOption) (*ListOrderTurnoverFilterValuesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListOrderTurnoverFilterValuesResponse)
+	err := c.cc.Invoke(ctx, OrderMetricsService_ListOrderTurnoverFilterValues_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +107,20 @@ type OrderMetricsServiceServer interface {
 	// members: use narrower groups), DEADLINE_EXCEEDED, CANCELLED (the caller gave
 	// up), INTERNAL (a server fault, retry later).
 	GetOrderTurnover(context.Context, *GetOrderTurnoverRequest) (*GetOrderTurnoverResponse, error)
+	// The values the shipment scheme or the processing status of the orders
+	// actually have, with the number of orders of each value, so that a client can
+	// offer them as a choice list for the shipment_schemes / order_statuses
+	// filters of GetOrderTurnover. The orders are the ones GetOrderTurnover counts
+	// without any filter (posted, not deleted, not cancelled, with an order date),
+	// limited to the organizations the caller is allowed to see. The empty string is
+	// a value of its own: orders for which the source gave no scheme or no status.
+	// Until the source has re-sent all orders with the scheme, the empty value also
+	// counts orders that are not loaded yet.
+	//
+	// Errors: UNAUTHENTICATED, INVALID_ARGUMENT (kind is not set, a period that is
+	// not valid, only one of from and to), PERMISSION_DENIED (an organization
+	// outside the caller's scope), DEADLINE_EXCEEDED, CANCELLED, INTERNAL.
+	ListOrderTurnoverFilterValues(context.Context, *ListOrderTurnoverFilterValuesRequest) (*ListOrderTurnoverFilterValuesResponse, error)
 	mustEmbedUnimplementedOrderMetricsServiceServer()
 }
 
@@ -94,6 +133,9 @@ type UnimplementedOrderMetricsServiceServer struct{}
 
 func (UnimplementedOrderMetricsServiceServer) GetOrderTurnover(context.Context, *GetOrderTurnoverRequest) (*GetOrderTurnoverResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetOrderTurnover not implemented")
+}
+func (UnimplementedOrderMetricsServiceServer) ListOrderTurnoverFilterValues(context.Context, *ListOrderTurnoverFilterValuesRequest) (*ListOrderTurnoverFilterValuesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListOrderTurnoverFilterValues not implemented")
 }
 func (UnimplementedOrderMetricsServiceServer) mustEmbedUnimplementedOrderMetricsServiceServer() {}
 func (UnimplementedOrderMetricsServiceServer) testEmbeddedByValue()                             {}
@@ -134,6 +176,24 @@ func _OrderMetricsService_GetOrderTurnover_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderMetricsService_ListOrderTurnoverFilterValues_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOrderTurnoverFilterValuesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderMetricsServiceServer).ListOrderTurnoverFilterValues(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderMetricsService_ListOrderTurnoverFilterValues_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderMetricsServiceServer).ListOrderTurnoverFilterValues(ctx, req.(*ListOrderTurnoverFilterValuesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrderMetricsService_ServiceDesc is the grpc.ServiceDesc for OrderMetricsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -144,6 +204,10 @@ var OrderMetricsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOrderTurnover",
 			Handler:    _OrderMetricsService_GetOrderTurnover_Handler,
+		},
+		{
+			MethodName: "ListOrderTurnoverFilterValues",
+			Handler:    _OrderMetricsService_ListOrderTurnoverFilterValues_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

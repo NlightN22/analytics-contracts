@@ -22,6 +22,55 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type OrderFilterKind int32
+
+const (
+	OrderFilterKind_ORDER_FILTER_KIND_UNSPECIFIED     OrderFilterKind = 0
+	OrderFilterKind_ORDER_FILTER_KIND_SHIPMENT_SCHEME OrderFilterKind = 1
+	OrderFilterKind_ORDER_FILTER_KIND_ORDER_STATUS    OrderFilterKind = 2
+)
+
+// Enum value maps for OrderFilterKind.
+var (
+	OrderFilterKind_name = map[int32]string{
+		0: "ORDER_FILTER_KIND_UNSPECIFIED",
+		1: "ORDER_FILTER_KIND_SHIPMENT_SCHEME",
+		2: "ORDER_FILTER_KIND_ORDER_STATUS",
+	}
+	OrderFilterKind_value = map[string]int32{
+		"ORDER_FILTER_KIND_UNSPECIFIED":     0,
+		"ORDER_FILTER_KIND_SHIPMENT_SCHEME": 1,
+		"ORDER_FILTER_KIND_ORDER_STATUS":    2,
+	}
+)
+
+func (x OrderFilterKind) Enum() *OrderFilterKind {
+	p := new(OrderFilterKind)
+	*p = x
+	return p
+}
+
+func (x OrderFilterKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (OrderFilterKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_analytics_v1_order_metrics_proto_enumTypes[0].Descriptor()
+}
+
+func (OrderFilterKind) Type() protoreflect.EnumType {
+	return &file_analytics_v1_order_metrics_proto_enumTypes[0]
+}
+
+func (x OrderFilterKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use OrderFilterKind.Descriptor instead.
+func (OrderFilterKind) EnumDescriptor() ([]byte, []int) {
+	return file_analytics_v1_order_metrics_proto_rawDescGZIP(), []int{0}
+}
+
 type Granularity int32
 
 const (
@@ -58,11 +107,11 @@ func (x Granularity) String() string {
 }
 
 func (Granularity) Descriptor() protoreflect.EnumDescriptor {
-	return file_analytics_v1_order_metrics_proto_enumTypes[0].Descriptor()
+	return file_analytics_v1_order_metrics_proto_enumTypes[1].Descriptor()
 }
 
 func (Granularity) Type() protoreflect.EnumType {
-	return &file_analytics_v1_order_metrics_proto_enumTypes[0]
+	return &file_analytics_v1_order_metrics_proto_enumTypes[1]
 }
 
 func (x Granularity) Number() protoreflect.EnumNumber {
@@ -71,7 +120,7 @@ func (x Granularity) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Granularity.Descriptor instead.
 func (Granularity) EnumDescriptor() ([]byte, []int) {
-	return file_analytics_v1_order_metrics_proto_rawDescGZIP(), []int{0}
+	return file_analytics_v1_order_metrics_proto_rawDescGZIP(), []int{1}
 }
 
 type Dimension int32
@@ -126,11 +175,11 @@ func (x Dimension) String() string {
 }
 
 func (Dimension) Descriptor() protoreflect.EnumDescriptor {
-	return file_analytics_v1_order_metrics_proto_enumTypes[1].Descriptor()
+	return file_analytics_v1_order_metrics_proto_enumTypes[2].Descriptor()
 }
 
 func (Dimension) Type() protoreflect.EnumType {
-	return &file_analytics_v1_order_metrics_proto_enumTypes[1]
+	return &file_analytics_v1_order_metrics_proto_enumTypes[2]
 }
 
 func (x Dimension) Number() protoreflect.EnumNumber {
@@ -139,7 +188,7 @@ func (x Dimension) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Dimension.Descriptor instead.
 func (Dimension) EnumDescriptor() ([]byte, []int) {
-	return file_analytics_v1_order_metrics_proto_rawDescGZIP(), []int{1}
+	return file_analytics_v1_order_metrics_proto_rawDescGZIP(), []int{2}
 }
 
 type GetOrderTurnoverRequest struct {
@@ -711,6 +760,181 @@ func (x *GetOrderTurnoverResponse) GetRows() []*OrderTurnoverRow {
 	return nil
 }
 
+type ListOrderTurnoverFilterValuesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Required: UNSPECIFIED is rejected.
+	Kind OrderFilterKind `protobuf:"varint,1,opt,name=kind,proto3,enum=analytics.v1.OrderFilterKind" json:"kind,omitempty"`
+	// Optional period by order date, from inclusive and to exclusive, with the same
+	// limits as GetOrderTurnover (between 2000-01-01 and 2100-01-01, at most 5
+	// years). Both or neither: without them all orders are counted.
+	From *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=from,proto3" json:"from,omitempty"`
+	To   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=to,proto3" json:"to,omitempty"`
+	// Optional: narrow to these organizations (each must be inside the caller's
+	// scope, else PERMISSION_DENIED). Empty means every organization the caller may
+	// see. At most 1000 values.
+	OrganizationIds []string `protobuf:"bytes,4,rep,name=organization_ids,json=organizationIds,proto3" json:"organization_ids,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ListOrderTurnoverFilterValuesRequest) Reset() {
+	*x = ListOrderTurnoverFilterValuesRequest{}
+	mi := &file_analytics_v1_order_metrics_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListOrderTurnoverFilterValuesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListOrderTurnoverFilterValuesRequest) ProtoMessage() {}
+
+func (x *ListOrderTurnoverFilterValuesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_analytics_v1_order_metrics_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListOrderTurnoverFilterValuesRequest.ProtoReflect.Descriptor instead.
+func (*ListOrderTurnoverFilterValuesRequest) Descriptor() ([]byte, []int) {
+	return file_analytics_v1_order_metrics_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListOrderTurnoverFilterValuesRequest) GetKind() OrderFilterKind {
+	if x != nil {
+		return x.Kind
+	}
+	return OrderFilterKind_ORDER_FILTER_KIND_UNSPECIFIED
+}
+
+func (x *ListOrderTurnoverFilterValuesRequest) GetFrom() *timestamppb.Timestamp {
+	if x != nil {
+		return x.From
+	}
+	return nil
+}
+
+func (x *ListOrderTurnoverFilterValuesRequest) GetTo() *timestamppb.Timestamp {
+	if x != nil {
+		return x.To
+	}
+	return nil
+}
+
+func (x *ListOrderTurnoverFilterValuesRequest) GetOrganizationIds() []string {
+	if x != nil {
+		return x.OrganizationIds
+	}
+	return nil
+}
+
+type OrderFilterValue struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The value exactly as the source sent it (case and spelling kept); empty for
+	// orders without a value.
+	Value         string `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	OrderCount    int64  `protobuf:"varint,2,opt,name=order_count,json=orderCount,proto3" json:"order_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OrderFilterValue) Reset() {
+	*x = OrderFilterValue{}
+	mi := &file_analytics_v1_order_metrics_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OrderFilterValue) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OrderFilterValue) ProtoMessage() {}
+
+func (x *OrderFilterValue) ProtoReflect() protoreflect.Message {
+	mi := &file_analytics_v1_order_metrics_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OrderFilterValue.ProtoReflect.Descriptor instead.
+func (*OrderFilterValue) Descriptor() ([]byte, []int) {
+	return file_analytics_v1_order_metrics_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *OrderFilterValue) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+func (x *OrderFilterValue) GetOrderCount() int64 {
+	if x != nil {
+		return x.OrderCount
+	}
+	return 0
+}
+
+type ListOrderTurnoverFilterValuesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Distinct values sorted by value (the empty value first), at most one row per
+	// value.
+	Values        []*OrderFilterValue `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListOrderTurnoverFilterValuesResponse) Reset() {
+	*x = ListOrderTurnoverFilterValuesResponse{}
+	mi := &file_analytics_v1_order_metrics_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListOrderTurnoverFilterValuesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListOrderTurnoverFilterValuesResponse) ProtoMessage() {}
+
+func (x *ListOrderTurnoverFilterValuesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_analytics_v1_order_metrics_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListOrderTurnoverFilterValuesResponse.ProtoReflect.Descriptor instead.
+func (*ListOrderTurnoverFilterValuesResponse) Descriptor() ([]byte, []int) {
+	return file_analytics_v1_order_metrics_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListOrderTurnoverFilterValuesResponse) GetValues() []*OrderFilterValue {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
 var File_analytics_v1_order_metrics_proto protoreflect.FileDescriptor
 
 const file_analytics_v1_order_metrics_proto_rawDesc = "" +
@@ -765,7 +989,22 @@ const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	" \x01(\tR\rproductAmount\x12?\n" +
 	"\x1cproduct_lines_without_amount\x18\v \x01(\x03R\x19productLinesWithoutAmount\"N\n" +
 	"\x18GetOrderTurnoverResponse\x122\n" +
-	"\x04rows\x18\x01 \x03(\v2\x1e.analytics.v1.OrderTurnoverRowR\x04rows*l\n" +
+	"\x04rows\x18\x01 \x03(\v2\x1e.analytics.v1.OrderTurnoverRowR\x04rows\"\xe0\x01\n" +
+	"$ListOrderTurnoverFilterValuesRequest\x121\n" +
+	"\x04kind\x18\x01 \x01(\x0e2\x1d.analytics.v1.OrderFilterKindR\x04kind\x12.\n" +
+	"\x04from\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
+	"\x02to\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12)\n" +
+	"\x10organization_ids\x18\x04 \x03(\tR\x0forganizationIds\"I\n" +
+	"\x10OrderFilterValue\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\tR\x05value\x12\x1f\n" +
+	"\vorder_count\x18\x02 \x01(\x03R\n" +
+	"orderCount\"_\n" +
+	"%ListOrderTurnoverFilterValuesResponse\x126\n" +
+	"\x06values\x18\x01 \x03(\v2\x1e.analytics.v1.OrderFilterValueR\x06values*\x7f\n" +
+	"\x0fOrderFilterKind\x12!\n" +
+	"\x1dORDER_FILTER_KIND_UNSPECIFIED\x10\x00\x12%\n" +
+	"!ORDER_FILTER_KIND_SHIPMENT_SCHEME\x10\x01\x12\"\n" +
+	"\x1eORDER_FILTER_KIND_ORDER_STATUS\x10\x02*l\n" +
 	"\vGranularity\x12\x1b\n" +
 	"\x17GRANULARITY_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10GRANULARITY_NONE\x10\x01\x12\x13\n" +
@@ -778,9 +1017,10 @@ const file_analytics_v1_order_metrics_proto_rawDesc = "" +
 	"\x16DIMENSION_ORGANIZATION\x10\x03\x12\x1b\n" +
 	"\x17DIMENSION_POINT_OF_SALE\x10\x04\x12\x15\n" +
 	"\x11DIMENSION_MANAGER\x10\x05\x12\"\n" +
-	"\x1eDIMENSION_COUNTERPARTY_MANAGER\x10\x062x\n" +
+	"\x1eDIMENSION_COUNTERPARTY_MANAGER\x10\x062\x83\x02\n" +
 	"\x13OrderMetricsService\x12a\n" +
-	"\x10GetOrderTurnover\x12%.analytics.v1.GetOrderTurnoverRequest\x1a&.analytics.v1.GetOrderTurnoverResponseBJZHgithub.com/NlightN22/analytics-contracts/gen/go/analytics/v1;analyticsv1b\x06proto3"
+	"\x10GetOrderTurnover\x12%.analytics.v1.GetOrderTurnoverRequest\x1a&.analytics.v1.GetOrderTurnoverResponse\x12\x88\x01\n" +
+	"\x1dListOrderTurnoverFilterValues\x122.analytics.v1.ListOrderTurnoverFilterValuesRequest\x1a3.analytics.v1.ListOrderTurnoverFilterValuesResponseBJZHgithub.com/NlightN22/analytics-contracts/gen/go/analytics/v1;analyticsv1b\x06proto3"
 
 var (
 	file_analytics_v1_order_metrics_proto_rawDescOnce sync.Once
@@ -794,30 +1034,40 @@ func file_analytics_v1_order_metrics_proto_rawDescGZIP() []byte {
 	return file_analytics_v1_order_metrics_proto_rawDescData
 }
 
-var file_analytics_v1_order_metrics_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_analytics_v1_order_metrics_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_analytics_v1_order_metrics_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_analytics_v1_order_metrics_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_analytics_v1_order_metrics_proto_goTypes = []any{
-	(Granularity)(0),                 // 0: analytics.v1.Granularity
-	(Dimension)(0),                   // 1: analytics.v1.Dimension
-	(*GetOrderTurnoverRequest)(nil),  // 2: analytics.v1.GetOrderTurnoverRequest
-	(*OrderTurnoverRow)(nil),         // 3: analytics.v1.OrderTurnoverRow
-	(*GetOrderTurnoverResponse)(nil), // 4: analytics.v1.GetOrderTurnoverResponse
-	(*timestamppb.Timestamp)(nil),    // 5: google.protobuf.Timestamp
+	(OrderFilterKind)(0),                          // 0: analytics.v1.OrderFilterKind
+	(Granularity)(0),                              // 1: analytics.v1.Granularity
+	(Dimension)(0),                                // 2: analytics.v1.Dimension
+	(*GetOrderTurnoverRequest)(nil),               // 3: analytics.v1.GetOrderTurnoverRequest
+	(*OrderTurnoverRow)(nil),                      // 4: analytics.v1.OrderTurnoverRow
+	(*GetOrderTurnoverResponse)(nil),              // 5: analytics.v1.GetOrderTurnoverResponse
+	(*ListOrderTurnoverFilterValuesRequest)(nil),  // 6: analytics.v1.ListOrderTurnoverFilterValuesRequest
+	(*OrderFilterValue)(nil),                      // 7: analytics.v1.OrderFilterValue
+	(*ListOrderTurnoverFilterValuesResponse)(nil), // 8: analytics.v1.ListOrderTurnoverFilterValuesResponse
+	(*timestamppb.Timestamp)(nil),                 // 9: google.protobuf.Timestamp
 }
 var file_analytics_v1_order_metrics_proto_depIdxs = []int32{
-	5, // 0: analytics.v1.GetOrderTurnoverRequest.from:type_name -> google.protobuf.Timestamp
-	5, // 1: analytics.v1.GetOrderTurnoverRequest.to:type_name -> google.protobuf.Timestamp
-	0, // 2: analytics.v1.GetOrderTurnoverRequest.granularity:type_name -> analytics.v1.Granularity
-	1, // 3: analytics.v1.GetOrderTurnoverRequest.dimension:type_name -> analytics.v1.Dimension
-	5, // 4: analytics.v1.OrderTurnoverRow.period_start:type_name -> google.protobuf.Timestamp
-	3, // 5: analytics.v1.GetOrderTurnoverResponse.rows:type_name -> analytics.v1.OrderTurnoverRow
-	2, // 6: analytics.v1.OrderMetricsService.GetOrderTurnover:input_type -> analytics.v1.GetOrderTurnoverRequest
-	4, // 7: analytics.v1.OrderMetricsService.GetOrderTurnover:output_type -> analytics.v1.GetOrderTurnoverResponse
-	7, // [7:8] is the sub-list for method output_type
-	6, // [6:7] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	9,  // 0: analytics.v1.GetOrderTurnoverRequest.from:type_name -> google.protobuf.Timestamp
+	9,  // 1: analytics.v1.GetOrderTurnoverRequest.to:type_name -> google.protobuf.Timestamp
+	1,  // 2: analytics.v1.GetOrderTurnoverRequest.granularity:type_name -> analytics.v1.Granularity
+	2,  // 3: analytics.v1.GetOrderTurnoverRequest.dimension:type_name -> analytics.v1.Dimension
+	9,  // 4: analytics.v1.OrderTurnoverRow.period_start:type_name -> google.protobuf.Timestamp
+	4,  // 5: analytics.v1.GetOrderTurnoverResponse.rows:type_name -> analytics.v1.OrderTurnoverRow
+	0,  // 6: analytics.v1.ListOrderTurnoverFilterValuesRequest.kind:type_name -> analytics.v1.OrderFilterKind
+	9,  // 7: analytics.v1.ListOrderTurnoverFilterValuesRequest.from:type_name -> google.protobuf.Timestamp
+	9,  // 8: analytics.v1.ListOrderTurnoverFilterValuesRequest.to:type_name -> google.protobuf.Timestamp
+	7,  // 9: analytics.v1.ListOrderTurnoverFilterValuesResponse.values:type_name -> analytics.v1.OrderFilterValue
+	3,  // 10: analytics.v1.OrderMetricsService.GetOrderTurnover:input_type -> analytics.v1.GetOrderTurnoverRequest
+	6,  // 11: analytics.v1.OrderMetricsService.ListOrderTurnoverFilterValues:input_type -> analytics.v1.ListOrderTurnoverFilterValuesRequest
+	5,  // 12: analytics.v1.OrderMetricsService.GetOrderTurnover:output_type -> analytics.v1.GetOrderTurnoverResponse
+	8,  // 13: analytics.v1.OrderMetricsService.ListOrderTurnoverFilterValues:output_type -> analytics.v1.ListOrderTurnoverFilterValuesResponse
+	12, // [12:14] is the sub-list for method output_type
+	10, // [10:12] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_analytics_v1_order_metrics_proto_init() }
@@ -830,8 +1080,8 @@ func file_analytics_v1_order_metrics_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_analytics_v1_order_metrics_proto_rawDesc), len(file_analytics_v1_order_metrics_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   3,
+			NumEnums:      3,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
